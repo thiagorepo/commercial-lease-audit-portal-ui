@@ -37,7 +37,7 @@ export function AppLayout() {
         <Header
           onMenuClick={() => setMobileMenuOpen(true)}
           onCommandPalette={() => setCommandPaletteOpen(true)}
-          syncIndicator={<SyncIndicator status="idle" lastSyncTime={lastSyncTime} />}
+          syncIndicator={<SyncIndicator status="synced" lastSyncTime={lastSyncTime} />}
         />
         <main className="flex-1 overflow-y-auto scrollbar-thin">
           <div className="max-w-[1400px] mx-auto p-4 md:p-6 animate-fade-in">
