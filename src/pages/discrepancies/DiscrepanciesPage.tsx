@@ -16,7 +16,7 @@ import type { DiscrepancyStatus, DiscrepancyPriority } from '@/types';
 const statusChips = [
   { value: 'all', label: 'All', count: discrepancies.length },
   { value: 'open', label: 'Open', count: discrepancies.filter(d => d.status === 'open').length },
-  { value: 'in-review', label: 'In Review', count: discrepancies.filter(d => d.status === 'in-review').length },
+  { value: 'pending', label: 'Pending', count: discrepancies.filter(d => d.status === 'pending').length },
   { value: 'resolved', label: 'Resolved', count: discrepancies.filter(d => d.status === 'resolved').length },
   { value: 'recovered', label: 'Recovered', count: discrepancies.filter(d => d.status === 'recovered').length },
   { value: 'dismissed', label: 'Dismissed', count: discrepancies.filter(d => d.status === 'dismissed').length },

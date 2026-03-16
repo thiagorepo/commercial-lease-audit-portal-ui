@@ -9,7 +9,6 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   pending: { label: 'Pending', className: 'bg-warning-50 text-warning-700 border-warning-100' },
   terminated: { label: 'Terminated', className: 'bg-error-50 text-error-700 border-error-200' },
   open: { label: 'Open', className: 'bg-primary/10 text-primary border-primary/30' },
-  'in-review': { label: 'In Review', className: 'bg-warning-50 text-warning-700 border-warning-100' },
   resolved: { label: 'Resolved', className: 'bg-success-50 text-success-700 border-success-200' },
   recovered: { label: 'Recovered', className: 'bg-success-50 text-success-700 border-success-200' },
   dismissed: { label: 'Dismissed', className: 'bg-secondary-100 text-secondary-500 border-secondary-200' },

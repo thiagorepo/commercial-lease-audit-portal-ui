@@ -1,7 +1,7 @@
 export type LeaseStatus = 'active' | 'expired' | 'pending' | 'terminated';
 export type CAMType = 'gross' | 'net' | 'modified-gross' | 'triple-net' | 'base-year';
 export type DiscrepancyCategory = 'rent-overcharge' | 'cam-overcharge' | 'late-fee' | 'error' | 'other';
-export type DiscrepancyStatus = 'open' | 'in-review' | 'resolved' | 'recovered' | 'dismissed' | 'false-positive';
+export type DiscrepancyStatus = 'open' | 'pending' | 'resolved' | 'recovered' | 'dismissed' | 'false-positive';
 export type DiscrepancyPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type CAMStatus = 'draft' | 'submitted' | 'approved' | 'finalized' | 'rejected';
 export type ReportStatus = 'draft' | 'reviewed' | 'final' | 'distributed' | 'archived';
@@ -60,6 +60,8 @@ export interface Lease {
   totalInvoiced: number;
   totalAudited: number;
   potentialRecovery: number;
+  currency_code: string;
+  version: number;
   createdAt: string;
 }
 
@@ -85,6 +87,8 @@ export interface Discrepancy {
   notes: Comment[];
   statusHistory: StatusHistoryEntry[];
   relatedDocuments: string[];
+  currency_code: string;
+  version: number;
   createdAt: string;
   updatedAt: string;
 }

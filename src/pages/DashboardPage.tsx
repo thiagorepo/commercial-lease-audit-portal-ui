@@ -73,7 +73,7 @@ export function DashboardPage() {
     color: pieColors[s as keyof typeof pieColors],
   })).filter(d => d.value > 0);
 
-  const openDiscs = discrepancies.filter(d => ['open','in-review'].includes(d.status));
+  const openDiscs = discrepancies.filter(d => ['open','pending'].includes(d.status));
   const totalRecovery = discrepancies.reduce((a, d) => a + (d.status === 'recovered' ? (d.recoveredAmount || 0) : d.status !== 'dismissed' && d.status !== 'false-positive' ? d.variance : 0), 0);
   const recoveryRate = Math.round((discrepancies.filter(d => d.status === 'recovered').length / discrepancies.length) * 100);
   const recentDiscs = openDiscs.slice(0, 5);
@@ -103,22 +103,22 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6">
           <div className="bg-card rounded-xl border border-border shadow-card">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
               <h2 className="text-base font-semibold text-foreground">Recent Discrepancies</h2>
               <Link to="/discrepancies" className="text-sm text-primary hover:text-primary font-medium">View all</Link>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[560px]">
                 <thead>
                   <tr className="border-b border-border/50">
-                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">Lease</th>
+                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3 w-44">Lease</th>
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3">Category</th>
-                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3">Variance</th>
-                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3">Priority</th>
-                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3">Status</th>
-                    <th className="px-3 py-3" />
+                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3 w-28">Variance</th>
+                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3 w-20">Priority</th>
+                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3 w-24">Status</th>
+                    <th className="px-3 py-3 w-12" />
                   </tr>
                 </thead>
                 <tbody>
@@ -126,19 +126,19 @@ export function DashboardPage() {
                     Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
                   ) : recentDiscs.map(d => (
                     <tr key={d.id} className="border-b border-border/30 hover:bg-accent transition-colors">
-                      <td className="px-5 py-3">
-                        <Link to={`/leases/${d.leaseId}`} className="text-sm font-medium text-primary hover:text-primary">{d.leaseNumber}</Link>
-                        <p className="text-xs text-muted-foreground">{d.tenantName}</p>
+                      <td className="px-5 py-3 w-44">
+                        <Link to={`/leases/${d.leaseId}`} className="text-sm font-medium text-primary hover:text-primary whitespace-nowrap">{d.leaseNumber}</Link>
+                        <p className="text-xs text-muted-foreground truncate max-w-[160px]">{d.tenantName}</p>
                       </td>
                       <td className="px-3 py-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-muted text-foreground/80 capitalize">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-muted text-foreground/80 capitalize whitespace-nowrap">
                           {d.category.replace(/-/g, ' ')}
                         </span>
                       </td>
-                      <td className="px-3 py-3"><VarianceIndicator amount={d.variance} percent={d.variancePercent} size="sm" /></td>
-                      <td className="px-3 py-3"><PriorityBadge priority={d.priority} /></td>
-                      <td className="px-3 py-3"><StatusBadge status={d.status} /></td>
-                      <td className="px-3 py-3 text-right">
+                      <td className="px-3 py-3 w-28"><VarianceIndicator amount={d.variance} percent={d.variancePercent} size="sm" /></td>
+                      <td className="px-3 py-3 w-20"><PriorityBadge priority={d.priority} /></td>
+                      <td className="px-3 py-3 w-24"><StatusBadge status={d.status} /></td>
+                      <td className="px-3 py-3 text-right w-12">
                         <Link to={`/discrepancies/${d.id}`} className="text-sm text-primary hover:text-primary font-medium">View</Link>
                       </td>
                     </tr>
@@ -190,15 +190,15 @@ export function DashboardPage() {
               {upcomingEvents.map(ev => {
                 const Icon = eventIcons[ev.type];
                 const colorClass = eventColors[ev.type];
+                const label = ev.title.split(': ')[1] || ev.title;
                 return (
-                  <div key={ev.id} className="flex items-start gap-3 px-5 py-3.5">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}>
-                      <Icon className="w-4 h-4" />
+                  <div key={ev.id} className="flex items-center gap-3 px-5 py-3">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}>
+                      <Icon className="w-3.5 h-3.5" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{ev.title.split(': ')[1] || ev.title}</p>
-                      <p className="text-xs text-muted-foreground">{ev.leaseNumber}</p>
-                      <p className="text-xs text-muted-foreground/70">{formatDate(ev.date)}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate leading-tight">{label}</p>
+                      <p className="text-xs text-muted-foreground">{ev.leaseNumber} &middot; {formatDate(ev.date)}</p>
                     </div>
                   </div>
                 );

@@ -46,10 +46,10 @@ export function DiscrepancyDetailPage() {
 
   const actions: Record<string, { label: string; color: string; onClick: () => void }[]> = {
     open: [
-      { label: 'Start Review', color: 'bg-primary hover:bg-primary/90 text-white', onClick: () => transition('in-review', 'Status updated to In Review') },
+      { label: 'Start Review', color: 'bg-primary hover:bg-primary/90 text-white', onClick: () => transition('pending', 'Status updated to Pending Review') },
       { label: 'Dismiss', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => transition('dismissed', 'Discrepancy dismissed') },
     ],
-    'in-review': [
+    pending: [
       { label: 'Resolve', color: 'bg-success-500 hover:bg-success-600 text-white', onClick: () => transition('resolved', 'Discrepancy resolved') },
       { label: 'Mark False Positive', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => transition('false-positive', 'Marked as false positive') },
       { label: 'Dismiss', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => transition('dismissed', 'Discrepancy dismissed') },
