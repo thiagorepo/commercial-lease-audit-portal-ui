@@ -1,9 +1,18 @@
-import { Bell, Search, Menu, ChevronRight, Home, LogOut, User, Settings, Moon, Sun } from 'lucide-react';
+import React from 'react';
+import { Bell, Search, Menu, Home, LogOut, User, Settings, Moon, Sun } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { currentUser } from '@/data/mock';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const routeLabels: Record<string, string> = {
   '/': 'Dashboard',
@@ -38,9 +47,10 @@ function buildBreadcrumbs(pathname: string) {
 interface HeaderProps {
   onMenuClick: () => void;
   onCommandPalette: () => void;
+  syncIndicator?: React.ReactNode;
 }
 
-export function Header({ onMenuClick, onCommandPalette }: HeaderProps) {
+export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -70,26 +80,28 @@ export function Header({ onMenuClick, onCommandPalette }: HeaderProps) {
       </button>
 
       <nav className="flex-1 min-w-0">
-        <ol className="flex items-center gap-1.5 text-sm">
-          {breadcrumbs.map((crumb, i) => (
-            <li key={crumb.href} className="flex items-center gap-1.5 min-w-0">
-              {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />}
-              {i === breadcrumbs.length - 1 ? (
-                <span className="text-primary font-medium truncate">{crumb.label}</span>
-              ) : (
-                <Link
-                  to={crumb.href}
-                  className="text-muted-foreground hover:text-primary truncate transition-colors"
-                >
-                  {i === 0 ? <Home className="w-4 h-4" /> : crumb.label}
-                </Link>
-              )}
-            </li>
-          ))}
-        </ol>
+        <Breadcrumb>
+          <BreadcrumbList>
+            {breadcrumbs.map((crumb, i) => (
+              <BreadcrumbItem key={crumb.href}>
+                {i > 0 && <BreadcrumbSeparator />}
+                {i === breadcrumbs.length - 1 ? (
+                  <BreadcrumbPage className="text-foreground font-medium">{crumb.label}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link to={crumb.href} className={cn('hover:text-foreground transition-colors', i === 0 && 'flex items-center')}>
+                      {i === 0 ? <Home className="w-4 h-4" /> : crumb.label}
+                    </Link>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
       </nav>
 
       <div className="flex items-center gap-2">
+        {syncIndicator && <div className="hidden md:block">{syncIndicator}</div>}
         <button
           onClick={onCommandPalette}
           className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground bg-muted hover:bg-accent rounded-lg transition-colors"
@@ -109,7 +121,7 @@ export function Header({ onMenuClick, onCommandPalette }: HeaderProps) {
 
         <button
           onClick={toggleTheme}
-          className="p-2 text-muted-foreground hover:text-accent-foreground hover:bg-accent dark:text-muted-foreground/70 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          className="p-2 text-muted-foreground hover:text-accent-foreground hover:bg-accent rounded-lg transition-colors"
           title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}

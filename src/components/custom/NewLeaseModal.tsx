@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { X, Building2, User, DollarSign, Calendar } from 'lucide-react';
-import { properties, portfolios } from '@/data/mock';
+import { X, Building2, User, DollarSign } from 'lucide-react';
+import { properties } from '@/data/mock';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { DatePicker } from '@/components/ui/date-picker';
 import type { CAMType } from '@/types';
 
 interface Props {
@@ -28,8 +29,8 @@ export function NewLeaseModal({ open, onClose }: Props) {
     propertyId: '',
     status: 'active',
     camType: 'gross' as CAMType,
-    termStart: '',
-    termEnd: '',
+    termStart: undefined as Date | undefined,
+    termEnd: undefined as Date | undefined,
     tenantName: '',
     tenantContact: '',
     tenantPhone: '',
@@ -43,7 +44,7 @@ export function NewLeaseModal({ open, onClose }: Props) {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const set = (k: string, v: string | boolean) => {
+  const set = (k: string, v: string | boolean | Date | undefined) => {
     setForm(f => ({ ...f, [k]: v }));
     setErrors(e => { const n = { ...e }; delete n[k]; return n; });
   };
@@ -55,7 +56,7 @@ export function NewLeaseModal({ open, onClose }: Props) {
       if (!form.propertyId) e.propertyId = 'Required';
       if (!form.termStart) e.termStart = 'Required';
       if (!form.termEnd) e.termEnd = 'Required';
-      if (form.termStart && form.termEnd && form.termEnd <= form.termStart) e.termEnd = 'End must be after start';
+      if (form.termStart && form.termEnd && form.termEnd <= form.termStart) e.termEnd = 'End must be after start date';
     }
     if (step === 1) {
       if (!form.tenantName.trim()) e.tenantName = 'Required';
@@ -82,7 +83,7 @@ export function NewLeaseModal({ open, onClose }: Props) {
       setStep(0);
       setForm({
         leaseNumber: '', propertyId: '', status: 'active', camType: 'gross',
-        termStart: '', termEnd: '', tenantName: '', tenantContact: '', tenantPhone: '',
+        termStart: undefined, termEnd: undefined, tenantName: '', tenantContact: '', tenantPhone: '',
         tenantEmail: '', tenantAddress: '', baseRent: '', squareFootage: '', escalationRate: '', renewalOption: false,
       });
     }, 1200);
@@ -155,14 +156,22 @@ export function NewLeaseModal({ open, onClose }: Props) {
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground/80 block mb-1">Term Start <span className="text-error-500">*</span></label>
-                  <input type="date" value={form.termStart} onChange={e => set('termStart', e.target.value)}
-                    className={cn('w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring', errors.termStart ? 'border-error-400 bg-error-50' : 'border-border')} />
+                  <DatePicker
+                    value={form.termStart}
+                    onChange={d => set('termStart', d)}
+                    placeholder="Select start date"
+                    className={cn(errors.termStart && 'border-error-400 bg-error-50')}
+                  />
                   {errors.termStart && <p className="text-xs text-error-600 mt-1">{errors.termStart}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground/80 block mb-1">Term End <span className="text-error-500">*</span></label>
-                  <input type="date" value={form.termEnd} onChange={e => set('termEnd', e.target.value)}
-                    className={cn('w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring', errors.termEnd ? 'border-error-400 bg-error-50' : 'border-border')} />
+                  <DatePicker
+                    value={form.termEnd}
+                    onChange={d => set('termEnd', d)}
+                    placeholder="Select end date"
+                    className={cn(errors.termEnd && 'border-error-400 bg-error-50')}
+                  />
                   {errors.termEnd && <p className="text-xs text-error-600 mt-1">{errors.termEnd}</p>}
                 </div>
               </div>
