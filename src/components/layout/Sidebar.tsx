@@ -61,11 +61,12 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
               <li key={item.href}>
                 <NavLink
                   to={item.href}
+                  style={isActive ? { backgroundColor: '#F8FAFC', color: '#09090B', borderLeftColor: '#09090B' } : {}}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
                     collapsed ? 'justify-center' : '',
                     isActive
-                      ? 'bg-[#F8FAFC] text-[#09090B] border-l-4 border-[#09090B] font-semibold'
+                      ? 'border-l-4 font-semibold'
                       : 'text-sidebar-foreground/70 hover:bg-accent/10 hover:text-sidebar-foreground'
                   )}
                   title={collapsed ? item.label : undefined}
@@ -137,10 +138,11 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
                   <NavLink
                     to={item.href}
                     onClick={onClose}
+                    style={isActive ? { backgroundColor: '#F8FAFC', color: '#09090B', borderLeftColor: '#09090B' } : {}}
                     className={cn(
                       'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
                       isActive
-                        ? 'bg-[#F8FAFC] text-[#09090B] border-l-4 border-[#09090B] font-semibold'
+                        ? 'border-l-4 font-semibold'
                         : 'text-sidebar-foreground/70 hover:bg-accent/10 hover:text-sidebar-foreground'
                     )}
                   >
