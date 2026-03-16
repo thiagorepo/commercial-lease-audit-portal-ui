@@ -11,6 +11,7 @@ import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { LeasesPage } from '@/pages/leases/LeasesPage';
 import { LeaseDetailPage } from '@/pages/leases/LeaseDetailPage';
+import { LeaseUploadPage } from '@/pages/leases/LeaseUploadPage';
 import { DiscrepanciesPage } from '@/pages/discrepancies/DiscrepanciesPage';
 import { DiscrepancyDetailPage } from '@/pages/discrepancies/DiscrepancyDetailPage';
 import { CAMReconciliationsPage } from '@/pages/cam-reconciliations/CAMReconciliationsPage';
@@ -56,6 +57,7 @@ export default function App() {
           <Route path="/properties/:id" element={<PropertyDetailPage />} />
 
           <Route path="/leases" element={<LeasesPage />} />
+          <Route path="/leases/upload" element={<LeaseUploadPage />} />
           <Route path="/leases/:id" element={<LeaseDetailPage />} />
 
           <Route path="/discrepancies" element={<DiscrepanciesPage />} />

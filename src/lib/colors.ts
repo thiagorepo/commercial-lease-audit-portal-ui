@@ -1,5 +1,19 @@
 export const themeColors = {
   primary: {
+    50: '#f8fafc',
+    100: '#f1f5f9',
+    200: '#e2e8f0',
+    300: '#cbd5e1',
+    400: '#94a3b8',
+    500: '#64748b',
+    600: '#475569',
+    700: '#334155',
+    800: '#1e293b',
+    900: '#0f172a',
+    DEFAULT: '#0f172a',
+    foreground: '#ffffff',
+  },
+  secondary: {
     50: '#eff6ff',
     100: '#dbeafe',
     200: '#bfdbfe',
@@ -11,20 +25,6 @@ export const themeColors = {
     800: '#1e40af',
     900: '#1e3a8a',
     DEFAULT: '#3b82f6',
-    foreground: '#ffffff',
-  },
-  secondary: {
-    50: '#f8fafc',
-    100: '#f1f5f9',
-    200: '#e2e8f0',
-    300: '#cbd5e1',
-    400: '#94a3b8',
-    500: '#64748b',
-    600: '#475569',
-    700: '#334155',
-    800: '#1e293b',
-    900: '#0f172a',
-    DEFAULT: '#64748b',
     foreground: '#ffffff',
   },
   success: {
@@ -83,5 +83,5 @@ export const themeColors = {
     4: '#d97706',
     5: '#16a34a',
   },
-  ring: '#3b82f6',
+  ring: '#0f172a',
 };
