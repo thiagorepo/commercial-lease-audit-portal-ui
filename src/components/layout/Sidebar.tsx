@@ -65,7 +65,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
                     'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
                     collapsed ? 'justify-center' : '',
                     isActive
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-sidebar-primary'
+                      ? 'bg-primary/20 text-primary border-l-4 border-primary font-semibold'
                       : 'text-sidebar-foreground/70 hover:bg-accent/10 hover:text-sidebar-foreground'
                   )}
                   title={collapsed ? item.label : undefined}
@@ -140,7 +140,7 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
                     className={cn(
                       'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
                       isActive
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-sidebar-primary'
+                        ? 'bg-primary/20 text-primary border-l-4 border-primary font-semibold'
                         : 'text-sidebar-foreground/70 hover:bg-accent/10 hover:text-sidebar-foreground'
                     )}
                   >
