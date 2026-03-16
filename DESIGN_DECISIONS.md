@@ -2,29 +2,26 @@
 
 ## Color System
 
-### Primary Color: Orange (#e05d38)
-**Decision**: Use orange as the primary brand color instead of blue.
+### Primary Color: Slate (#0F172A) — Earth-Toned Industrial
+**Decision**: Use deep Slate Navy as the primary brand color per the UXL "Earth-Toned Industrial" specification.
 
 **Rationale**:
-- **Professional Context**: Orange conveys warmth, reliability, and professionalism while remaining distinct from the oversaturated blue market
-- **Accessibility**: Orange provides excellent contrast ratios with white and light backgrounds, meeting WCAG AA and AAA standards
-- **Industry Differentiation**: Orange is less common in financial/audit software, creating immediate visual distinction from competitors
-- **Psychological Impact**: Orange is associated with:
-  - Enthusiasm and engagement
-  - Trust and stability
-  - Energy and optimism
-  - Action and alertness
-- **Dashboard Usability**: Orange stands out in data-heavy interfaces without being overwhelming
-- **Brand Identity**: Creates a unique, memorable visual identity for the LeaseAudit platform
+- **Specification Compliance**: Matches the UXL-defined Slate (#0F172A) primary token
+- **Industrial Aesthetic**: Deep slate navy conveys authority, precision, and professional rigor appropriate for an audit platform
+- **Contrast**: Provides excellent contrast ratios (>7:1) against white foreground, exceeding WCAG AAA
+- **Data Density**: Dark, authoritative primary recedes appropriately in data-heavy tables and charts, letting content lead
+- **Trust Signaling**: Slate communicates stability, reliability, and institutional trust — critical for financial/legal workflows
+- **Sidebar Treatment**: The dark slate sidebar creates a clear spatial hierarchy, anchoring navigation and freeing the content area
 
 ### Color Palette Strategy
 The complete color system includes:
-- **Primary (Orange)**: Primary CTAs, active states, emphasis
-- **Secondary (Slate)**: Supporting elements, less critical actions
-- **Success (Green)**: Positive states, completed discrepancies, recovery indicators
-- **Warning (Amber)**: Caution, pending reviews, at-risk items
-- **Error (Red)**: Critical issues, discrepancies, problems requiring immediate attention
-- **Accent (Orange)**: Highlights and decorative elements
+- **Primary (Slate #0F172A)**: Buttons, sidebar background, active states, headings
+- **Secondary (Slate-500 #64748b)**: Supporting text, secondary actions, labels
+- **Accent (Slate-100 #e8ecf4)**: Hover states, selected row backgrounds, chips
+- **Success (Green #16a34a)**: Recovered discrepancies, positive variances, paid invoices
+- **Warning (Amber #d97706)**: Pending items, at-risk deadlines, caution states
+- **Error/Destructive (Red #ef4444)**: Open discrepancies, overdue invoices, critical issues
+- **Info (Steel Blue #0e6fa5)**: Informational messages, in-review states, neutral highlights
 
 ### Implementation
 Color tokens are defined in `src/lib/colors.ts` with multiple shades (50-900) for a sophisticated hierarchy. The system supports:
