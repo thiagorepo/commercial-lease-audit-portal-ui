@@ -94,8 +94,8 @@ export function NewLeaseModal({ open, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card rounded-2xl shadow-xl w-full max-w-lg animate-fade-in overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-border/50">
+      <div className="relative bg-card rounded-2xl shadow-xl w-full max-w-lg animate-fade-in overflow-hidden flex flex-col max-h-[90vh] sm:max-h-auto">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-border/50 shrink-0">
           <div>
             <h2 className="text-base font-semibold text-foreground">New Lease</h2>
             <p className="text-xs text-muted-foreground mt-0.5">Step {step + 1} of {steps.length} — {steps[step]}</p>
@@ -105,7 +105,7 @@ export function NewLeaseModal({ open, onClose }: Props) {
           </button>
         </div>
 
-        <div className="px-4 pt-3 pb-2 sm:px-6 sm:pt-4">
+        <div className="px-4 pt-3 pb-2 sm:px-6 sm:pt-4 shrink-0">
           <div className="flex gap-2">
             {steps.map((s, i) => (
               <div key={s} className="flex-1">
@@ -116,7 +116,7 @@ export function NewLeaseModal({ open, onClose }: Props) {
           </div>
         </div>
 
-        <div className="px-4 py-3 sm:px-6 sm:py-4 space-y-4 min-h-[320px]">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 space-y-4 min-h-[320px] overflow-y-auto flex-1">
           {step === 0 && (
             <>
               <div className="flex items-center gap-2 mb-2">
@@ -254,7 +254,7 @@ export function NewLeaseModal({ open, onClose }: Props) {
           )}
         </div>
 
-        <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-border/50 flex gap-3">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-border/50 flex gap-3 shrink-0">
           {step > 0 && (
             <button onClick={handleBack} className="flex-1 py-2.5 border border-border rounded-xl text-sm font-medium text-foreground/80 hover:bg-accent transition-colors">
               Back

@@ -93,15 +93,15 @@ export function FileUploadModal({ open, onClose }: FileUploadModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
-      <div className="relative bg-card rounded-2xl shadow-2xl w-full max-w-lg animate-fade-in">
-        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-border">
+      <div className="relative bg-card rounded-2xl shadow-2xl w-full max-w-lg animate-fade-in flex flex-col max-h-[90vh] sm:max-h-auto">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-border shrink-0">
           <h2 className="text-base font-semibold text-foreground">Upload Lease Document</h2>
           <button onClick={handleClose} className="p-1 text-muted-foreground/70 hover:text-accent-foreground rounded-md transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {state === 'idle' && (
             <div
               onDrop={handleDrop}

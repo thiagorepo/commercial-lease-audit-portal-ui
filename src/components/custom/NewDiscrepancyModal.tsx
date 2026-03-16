@@ -72,8 +72,8 @@ export function NewDiscrepancyModal({ open, onClose, defaultLeaseId }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card rounded-2xl shadow-xl w-full max-w-lg animate-fade-in">
-        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-border/50">
+      <div className="relative bg-card rounded-2xl shadow-xl w-full max-w-lg animate-fade-in flex flex-col max-h-[90vh] sm:max-h-auto">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-border/50 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-warning-50 border border-warning-100 flex items-center justify-center">
               <AlertTriangle className="w-4 h-4 text-warning-600" />
@@ -85,7 +85,7 @@ export function NewDiscrepancyModal({ open, onClose, defaultLeaseId }: Props) {
           </button>
         </div>
 
-        <div className="px-4 py-4 sm:px-6 sm:py-5 space-y-4">
+        <div className="px-4 py-4 sm:px-6 sm:py-5 space-y-4 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="text-xs font-medium text-foreground/80 block mb-1">Lease <span className="text-error-500">*</span></label>
@@ -161,7 +161,7 @@ export function NewDiscrepancyModal({ open, onClose, defaultLeaseId }: Props) {
           </div>
         </div>
 
-        <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-border/50 flex gap-3">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-border/50 flex gap-3 shrink-0">
           <button onClick={onClose} className="flex-1 py-2.5 border border-border rounded-xl text-sm font-medium text-foreground/80 hover:bg-accent transition-colors">Cancel</button>
           <button onClick={handleSubmit} disabled={loading} className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-70 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
             {loading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating...</> : 'Create Discrepancy'}
