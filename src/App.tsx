@@ -23,6 +23,8 @@ import { CalendarPage } from '@/pages/CalendarPage';
 import { ExportsPage, NewExportPage } from '@/pages/ExportsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { AdminPage } from '@/pages/AdminPage';
+import { DocumentsPage } from '@/pages/DocumentsPage';
+import { InvoicesPage } from '@/pages/InvoicesPage';
 
 export default function App() {
   useEffect(() => {
@@ -66,6 +68,10 @@ export default function App() {
 
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/reports/:id" element={<ReportDetailPage />} />
+
+          <Route path="/documents" element={<DocumentsPage />} />
+
+          <Route path="/invoices" element={<InvoicesPage />} />
 
           <Route path="/exports" element={<ExportsPage />} />
           <Route path="/exports/new" element={<NewExportPage />} />

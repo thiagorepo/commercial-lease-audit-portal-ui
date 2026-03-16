@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, MapPin, FileText, AlertTriangle,
   Calculator, Calendar, BarChart3, Download, Settings, Shield,
-  ChevronLeft, ChevronRight, LogOut, Menu, X
+  ChevronLeft, ChevronRight, LogOut, Menu, X, File, Receipt
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { organization, currentUser } from '@/data/mock';
@@ -15,6 +15,8 @@ const navItems = [
   { label: 'Leases', icon: FileText, href: '/leases' },
   { label: 'Discrepancies', icon: AlertTriangle, href: '/discrepancies' },
   { label: 'CAM Audit', icon: Calculator, href: '/cam-reconciliations' },
+  { label: 'Documents', icon: File, href: '/documents' },
+  { label: 'Invoices', icon: Receipt, href: '/invoices' },
   { label: 'Calendar', icon: Calendar, href: '/calendar' },
   { label: 'Reports', icon: BarChart3, href: '/reports' },
   { label: 'Exports', icon: Download, href: '/exports' },
