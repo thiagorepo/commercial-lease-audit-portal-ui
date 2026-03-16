@@ -18,9 +18,7 @@ const statusChips = [
   { value: 'open', label: 'Open', count: discrepancies.filter(d => d.status === 'open').length },
   { value: 'pending', label: 'Pending', count: discrepancies.filter(d => d.status === 'pending').length },
   { value: 'resolved', label: 'Resolved', count: discrepancies.filter(d => d.status === 'resolved').length },
-  { value: 'recovered', label: 'Recovered', count: discrepancies.filter(d => d.status === 'recovered').length },
-  { value: 'dismissed', label: 'Dismissed', count: discrepancies.filter(d => d.status === 'dismissed').length },
-  { value: 'false-positive', label: 'False Positive', count: discrepancies.filter(d => d.status === 'false-positive').length },
+  { value: 'cancelled', label: 'Cancelled', count: discrepancies.filter(d => d.status === 'cancelled').length },
 ];
 
 const categories = ['all', 'rent-overcharge', 'cam-overcharge', 'late-fee', 'error', 'other'];

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Young+Serif:wght@400&family=Fraunces:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @import "tailwindcss";
 
@@ -51,8 +51,9 @@
   --sidebar-accent-foreground: hsl(214 32% 91%);
   --sidebar-border: hsl(222 47% 18%);
   --sidebar-ring: hsl(215 50% 55%);
-  --font-sans: Inter, sans-serif;
-  --font-serif: Source Serif 4, serif;
+  --font-sans: Geist, sans-serif;
+  --font-serif: Young Serif, serif;
+  --font-display: Fraunces, serif;
   --font-mono: JetBrains Mono, monospace;
   --radius: 0.5rem;
   --shadow-x: 0px;
@@ -119,8 +120,9 @@
   --sidebar-accent-foreground: hsl(214 32% 91%);
   --sidebar-border: hsl(222 47% 14%);
   --sidebar-ring: hsl(215 50% 55%);
-  --font-sans: Inter, sans-serif;
-  --font-serif: Source Serif 4, serif;
+  --font-sans: Geist, sans-serif;
+  --font-serif: Young Serif, serif;
+  --font-display: Fraunces, serif;
   --font-mono: JetBrains Mono, monospace;
   --radius: 0.5rem;
   --shadow-x: 0px;
@@ -189,6 +191,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
+  --font-display: var(--font-display);
 
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);

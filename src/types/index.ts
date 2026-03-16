@@ -1,7 +1,7 @@
 export type LeaseStatus = 'active' | 'expired' | 'pending' | 'terminated';
 export type CAMType = 'gross' | 'net' | 'modified-gross' | 'triple-net' | 'base-year';
 export type DiscrepancyCategory = 'rent-overcharge' | 'cam-overcharge' | 'late-fee' | 'error' | 'other';
-export type DiscrepancyStatus = 'open' | 'pending' | 'resolved' | 'recovered' | 'dismissed' | 'false-positive';
+export type DiscrepancyStatus = 'open' | 'pending' | 'resolved' | 'cancelled';
 export type DiscrepancyPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type CAMStatus = 'draft' | 'submitted' | 'approved' | 'finalized' | 'rejected';
 export type ReportStatus = 'draft' | 'reviewed' | 'final' | 'distributed' | 'archived';
