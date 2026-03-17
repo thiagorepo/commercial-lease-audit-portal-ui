@@ -122,7 +122,7 @@ export function ReportsPage() {
                               a.click();
                               window.URL.revokeObjectURL(url);
                               toast.success('Report downloaded');
-                            }} className="p-1.5 text-muted-foreground/70 hover:text-accent-foreground hover:bg-accent rounded-md transition-colors\" title=\"Download">
+                            }} className="p-1.5 text-muted-foreground/70 hover:text-accent-foreground hover:bg-accent rounded-md transition-colors\" title="Download">
                               <Download className="w-4 h-4" />
                             </button>
                           </div>
