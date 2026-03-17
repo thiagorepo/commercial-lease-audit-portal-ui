@@ -6,7 +6,7 @@ import { portfolios, properties } from '@/data/mock';
 export function PortfoliosPage() {
   return (
     <div>
-      <PageHeader title="Portfolios" breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Portfolios' }]} />
+      <PageHeader title="Portfolios" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Portfolios' }]} />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {portfolios.map(p => (
           <Link key={p.id} to={`/portfolios/${p.id}`}
@@ -59,7 +59,7 @@ export function PortfolioDetailPage() {
     <div>
       <PageHeader
         title={portfolio.name}
-        breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Portfolios', href: '/portfolios' }, { label: portfolio.name }]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Portfolios', href: '/dashboard/portfolios' }, { label: portfolio.name }]}
       />
       <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

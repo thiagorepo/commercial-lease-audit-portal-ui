@@ -48,7 +48,7 @@ export function ReportsPage() {
     <div>
       <PageHeader
         title="Reports"
-        breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Reports' }]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Reports' }]}
         actions={
           <button onClick={() => setNewReportOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors">
             <Plus className="w-4 h-4" /> New Report
@@ -122,7 +122,7 @@ export function ReportsPage() {
                               a.click();
                               window.URL.revokeObjectURL(url);
                               toast.success('Report downloaded');
-                            }} className="p-1.5 text-muted-foreground/70 hover:text-accent-foreground hover:bg-accent rounded-md transition-colors\" title="Download">
+                            }} className="p-1.5 text-muted-foreground/70 hover:text-accent-foreground hover:bg-accent rounded-md transition-colors\" title=\"Download">
                               <Download className="w-4 h-4" />
                             </button>
                           </div>

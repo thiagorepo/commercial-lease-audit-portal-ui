@@ -51,7 +51,7 @@ export function CalendarPage() {
 
   return (
     <div>
-      <PageHeader title="Calendar" breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Calendar' }]} />
+      <PageHeader title="Calendar" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Calendar' }]} />
 
       <div className="flex items-center gap-4 mb-4 flex-wrap">
         {(['renewal', 'escalation', 'expiration', 'deadline', 'audit'] as EventType[]).map(type => (

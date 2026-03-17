@@ -48,7 +48,7 @@ export function CAMReconciliationsPage() {
     <div>
       <PageHeader
         title="CAM Audit"
-        breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'CAM Audit' }]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'CAM Audit' }]}
         actions={
           <button onClick={() => setNewCAMOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors">
             <Plus className="w-4 h-4" /> New Reconciliation

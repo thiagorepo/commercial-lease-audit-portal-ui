@@ -36,7 +36,7 @@ export function AdminPage() {
     <div>
       <PageHeader
         title="Admin"
-        breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Admin' }]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Admin' }]}
         description="Manage users, organization settings, and system audit logs"
       />
 

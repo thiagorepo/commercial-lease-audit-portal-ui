@@ -81,7 +81,7 @@ export function LeasesPage() {
     <div>
       <PageHeader
         title="Leases"
-        breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Leases' }]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Leases' }]}
         actions={
           <button onClick={() => setNewLeaseOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors">
             <Plus className="w-4 h-4" /> New Lease

@@ -33,7 +33,7 @@ export function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="Settings" breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Settings' }]} />
+      <PageHeader title="Settings" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Settings' }]} />
 
       <div className="flex gap-6">
         <div className="hidden md:flex flex-col w-52 shrink-0">

@@ -16,7 +16,7 @@ export function AuthLayout() {
             <Building2 className="w-8 h-8 text-white" />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground">LeaseAudit Portal</h1>
+            <h1 className="text-2xl font-bold text-foreground">LeaseGuard Portal</h1>
             <p className="text-sm text-muted-foreground mt-1">Commercial lease audit management</p>
           </div>
         </div>
@@ -27,7 +27,7 @@ export function AuthLayout() {
       </div>
 
       <footer className="relative py-6 text-center text-xs text-muted-foreground/70">
-        <span>© 2026 LeaseAudit Portal</span>
+        <span>© 2026 LeaseGuard Portal</span>
         <span className="mx-2">·</span>
         <span className="hover:text-accent-foreground transition-colors cursor-default">Terms of Service</span>
         <span className="mx-2">·</span>

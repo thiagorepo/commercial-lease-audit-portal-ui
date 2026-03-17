@@ -16,7 +16,7 @@ export function PropertiesPage() {
 
   return (
     <div>
-      <PageHeader title="Properties" breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Properties' }]} />
+      <PageHeader title="Properties" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Properties' }]} />
 
       <div className="flex items-center justify-between gap-4 mb-4">
         <div className="relative flex-1 max-w-md">
@@ -107,7 +107,7 @@ export function PropertyDetailPage() {
     <div>
       <PageHeader
         title={property.name}
-        breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Properties', href: '/properties' }, { label: property.name }]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Properties', href: '/dashboard/properties' }, { label: property.name }]}
       />
       <div className="space-y-6">
         <div className="bg-card rounded-xl border border-border shadow-card p-5">

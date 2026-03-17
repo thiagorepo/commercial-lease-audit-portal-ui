@@ -45,7 +45,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-sidebar-foreground truncate">LeaseAudit</p>
+            <p className="text-sm font-semibold text-sidebar-foreground truncate">LeaseGuard</p>
             <p className="text-xs text-sidebar-foreground/60 truncate">{organization.name}</p>
           </div>
         )}
@@ -118,7 +118,7 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
             <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
               <Building2 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-sm font-semibold text-sidebar-foreground">LeaseAudit</span>
+            <span className="text-sm font-semibold text-sidebar-foreground">LeaseGuard</span>
           </div>
           <button onClick={onClose} className="p-1 text-sidebar-foreground/60 hover:text-sidebar-foreground rounded">
             <X className="w-5 h-5" />

@@ -12,7 +12,7 @@ export function ExportsPage() {
     <div>
       <PageHeader
         title="Exports"
-        breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Exports' }]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Exports' }]}
         actions={
           <Link to="/dashboard/exports/new" className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors">
             <Plus className="w-4 h-4" /> New Export
@@ -79,7 +79,7 @@ export function NewExportPage() {
     <div>
       <PageHeader
         title="New Export"
-        breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Exports', href: '/exports' }, { label: 'New Export' }]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Exports', href: '/dashboard/exports' }, { label: 'New Export' }]}
       />
       <div className="max-w-2xl">
         <div className="bg-card rounded-xl border border-border shadow-card p-6 space-y-6">

@@ -54,7 +54,7 @@ export function LeaseDetailPage() {
     <div>
       <PageHeader
         title={lease.leaseNumber}
-        breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Leases', href: '/leases' }, { label: lease.leaseNumber }]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/dashboard/overview' }, { label: 'Leases', href: '/dashboard/leases' }, { label: lease.leaseNumber }]}
         actions={
           <div className="flex gap-2">
             <button onClick={() => setEditOpen(true)} className="flex items-center gap-2 px-3 py-2 border border-border text-foreground/80 text-sm font-medium rounded-lg hover:bg-accent transition-colors">
