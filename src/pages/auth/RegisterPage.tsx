@@ -55,7 +55,7 @@ export function RegisterPage() {
   const handleCreate = () => {
     const e = validateStep2();
     if (Object.keys(e).length) { setErrors(e); return; }
-    setTimeout(() => navigate('/'), 500);
+    setTimeout(() => navigate('/dashboard/overview'), 500);
   };
 
   return (
@@ -145,7 +145,7 @@ export function RegisterPage() {
 
       <p className="text-center text-sm text-muted-foreground mt-5">
         Already have an account?{' '}
-        <Link to="/login" className="text-primary hover:text-primary font-medium">Sign in</Link>
+        <Link to="/auth/login" className="text-primary hover:text-primary font-medium">Sign in</Link>
       </p>
     </div>
   );

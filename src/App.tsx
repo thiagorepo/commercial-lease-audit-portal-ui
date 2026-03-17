@@ -41,47 +41,48 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/auth/login" element={<LoginPage />} />
+          <Route path="/auth/register" element={<RegisterPage />} />
+          <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
         <Route element={<AppLayout />}>
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/" element={<Navigate to="/dashboard/overview" replace />} />
+          <Route path="/dashboard/overview" element={<DashboardPage />} />
 
-          <Route path="/portfolios" element={<PortfoliosPage />} />
-          <Route path="/portfolios/:id" element={<PortfolioDetailPage />} />
+          <Route path="/dashboard/portfolios" element={<PortfoliosPage />} />
+          <Route path="/dashboard/portfolios/:id" element={<PortfolioDetailPage />} />
 
-          <Route path="/properties" element={<PropertiesPage />} />
-          <Route path="/properties/:id" element={<PropertyDetailPage />} />
+          <Route path="/dashboard/properties" element={<PropertiesPage />} />
+          <Route path="/dashboard/properties/:id" element={<PropertyDetailPage />} />
 
-          <Route path="/leases" element={<LeasesPage />} />
-          <Route path="/leases/upload" element={<LeaseUploadPage />} />
-          <Route path="/leases/:id" element={<LeaseDetailPage />} />
+          <Route path="/dashboard/leases" element={<LeasesPage />} />
+          <Route path="/dashboard/leases/upload" element={<LeaseUploadPage />} />
+          <Route path="/dashboard/leases/:id" element={<LeaseDetailPage />} />
 
-          <Route path="/discrepancies" element={<DiscrepanciesPage />} />
-          <Route path="/discrepancies/:id" element={<DiscrepancyDetailPage />} />
+          <Route path="/dashboard/discrepancies" element={<DiscrepanciesPage />} />
+          <Route path="/dashboard/discrepancies/:id" element={<DiscrepancyDetailPage />} />
 
-          <Route path="/cam-reconciliations" element={<CAMReconciliationsPage />} />
-          <Route path="/cam-reconciliations/:id" element={<CAMDetailPage />} />
+          <Route path="/dashboard/cam-reconciliations" element={<CAMReconciliationsPage />} />
+          <Route path="/dashboard/cam-reconciliations/:id" element={<CAMDetailPage />} />
 
-          <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/dashboard/calendar" element={<CalendarPage />} />
 
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/reports/:id" element={<ReportDetailPage />} />
+          <Route path="/dashboard/reports" element={<ReportsPage />} />
+          <Route path="/dashboard/reports/:id" element={<ReportDetailPage />} />
 
-          <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/dashboard/documents" element={<DocumentsPage />} />
 
-          <Route path="/invoices" element={<InvoicesPage />} />
+          <Route path="/dashboard/invoices" element={<InvoicesPage />} />
 
-          <Route path="/exports" element={<ExportsPage />} />
-          <Route path="/exports/new" element={<NewExportPage />} />
+          <Route path="/dashboard/exports" element={<ExportsPage />} />
+          <Route path="/dashboard/exports/new" element={<NewExportPage />} />
 
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/dashboard/settings" element={<SettingsPage />} />
+          <Route path="/dashboard/admin" element={<AdminPage />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard/overview" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>

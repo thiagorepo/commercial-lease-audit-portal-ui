@@ -232,7 +232,7 @@ export function FileUploadModal({ open, onClose }: FileUploadModalProps) {
                 ))}
               </div>
               <button
-                onClick={() => { handleClose(); navigate('/leases'); }}
+                onClick={() => { handleClose(); navigate('/dashboard/leases'); }}
                 className="w-full py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors"
               >
                 Review Lease

@@ -107,7 +107,7 @@ export function DashboardPage() {
           <div className="bg-card rounded-xl border border-border shadow-card">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
               <h2 className="text-base font-semibold text-foreground">Recent Discrepancies</h2>
-              <Link to="/discrepancies" className="text-sm text-primary hover:text-primary font-medium">View all</Link>
+              <Link to="/dashboard/discrepancies" className="text-sm text-primary hover:text-primary font-medium">View all</Link>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[560px]">
@@ -184,7 +184,7 @@ export function DashboardPage() {
           <div className="bg-card rounded-xl border border-border shadow-card">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
               <h2 className="text-base font-semibold text-foreground">Upcoming Deadlines</h2>
-              <Link to="/calendar" className="text-sm text-primary hover:text-primary font-medium">View all</Link>
+              <Link to="/dashboard/calendar" className="text-sm text-primary hover:text-primary font-medium">View all</Link>
             </div>
             <div className="divide-y divide-border/30">
               {upcomingEvents.map(ev => {

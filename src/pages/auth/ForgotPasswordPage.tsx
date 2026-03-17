@@ -27,7 +27,7 @@ export function ForgotPasswordPage() {
         <p className="text-sm text-muted-foreground mb-6">
           We've sent a password reset link to <span className="font-medium text-foreground/80">{email}</span>. Check your inbox and follow the instructions.
         </p>
-        <Link to="/login" className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary font-medium">
+        <Link to="/auth/login" className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary font-medium">
           <ArrowLeft className="w-4 h-4" /> Back to sign in
         </Link>
       </div>
@@ -53,7 +53,7 @@ export function ForgotPasswordPage() {
       </form>
 
       <div className="mt-5 text-center">
-        <Link to="/login" className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary font-medium">
+        <Link to="/auth/login" className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary font-medium">
           <ArrowLeft className="w-4 h-4" /> Back to sign in
         </Link>
       </div>

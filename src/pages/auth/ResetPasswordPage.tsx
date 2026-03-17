@@ -36,7 +36,7 @@ export function ResetPasswordPage() {
     if (password !== confirm) errs.confirm = 'Passwords do not match';
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setSuccess(true);
-    setTimeout(() => navigate('/login'), 2000);
+    setTimeout(() => navigate('/auth/login'), 2000);
   };
 
   if (success) {

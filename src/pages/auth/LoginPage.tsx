@@ -25,7 +25,7 @@ export function LoginPage() {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
     setLoading(true);
-    setTimeout(() => navigate('/'), 1000);
+    setTimeout(() => navigate('/dashboard/overview'), 1000);
   };
 
   return (
@@ -74,7 +74,7 @@ export function LoginPage() {
             <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} className="w-4 h-4 rounded border-border text-primary" />
             <span className="text-sm text-muted-foreground">Remember me</span>
           </label>
-          <Link to="/forgot-password" className="text-sm text-primary hover:text-primary font-medium">Forgot password?</Link>
+          <Link to="/auth/forgot-password" className="text-sm text-primary hover:text-primary font-medium">Forgot password?</Link>
         </div>
 
         <button
@@ -94,7 +94,7 @@ export function LoginPage() {
 
       <p className="text-center text-sm text-muted-foreground">
         Don't have an account?{' '}
-        <Link to="/register" className="text-primary hover:text-primary font-medium">Create one</Link>
+        <Link to="/auth/register" className="text-primary hover:text-primary font-medium">Create one</Link>
       </p>
     </div>
   );

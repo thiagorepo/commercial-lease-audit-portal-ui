@@ -38,7 +38,7 @@ export function ReportDetailPage() {
     return (
       <div className="text-center py-20">
         <p className="text-muted-foreground">Report not found.</p>
-        <Link to="/reports" className="text-primary text-sm font-medium mt-2 inline-block">Back to Reports</Link>
+        <Link to="/dashboard/reports" className="text-primary text-sm font-medium mt-2 inline-block">Back to Reports</Link>
       </div>
     );
   }

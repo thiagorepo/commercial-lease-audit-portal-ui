@@ -48,7 +48,7 @@ export function PortfolioDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
         <p className="text-muted-foreground text-lg font-medium">Portfolio not found</p>
-        <a href="/portfolios" className="text-primary hover:underline text-sm">Back to Portfolios</a>
+        <a href="/dashboard/portfolios" className="text-primary hover:underline text-sm">Back to Portfolios</a>
       </div>
     );
   }

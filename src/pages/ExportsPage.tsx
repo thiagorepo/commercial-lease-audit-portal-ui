@@ -14,7 +14,7 @@ export function ExportsPage() {
         title="Exports"
         breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Exports' }]}
         actions={
-          <Link to="/exports/new" className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors">
+          <Link to="/dashboard/exports/new" className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors">
             <Plus className="w-4 h-4" /> New Export
           </Link>
         }

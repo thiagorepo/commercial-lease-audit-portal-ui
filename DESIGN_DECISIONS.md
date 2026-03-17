@@ -90,20 +90,28 @@ Persistent notification when offline:
 13. Admin - Administrative controls
 
 ### Route Structure
-All routes follow RESTful conventions:
-- `/` - Dashboard
-- `/portfolios`, `/portfolios/:id` - Portfolio list and detail
-- `/properties`, `/properties/:id` - Property list and detail
-- `/leases`, `/leases/:id` - Lease list and detail
-- `/discrepancies`, `/discrepancies/:id` - Discrepancy list and detail
-- `/cam-reconciliations`, `/cam-reconciliations/:id` - CAM list and detail
-- `/documents` - Document library
-- `/invoices` - Invoice tracking
-- `/calendar` - Calendar view
-- `/reports`, `/reports/:id` - Report list and detail
-- `/exports`, `/exports/new` - Export management
-- `/settings` - Settings page
-- `/admin` - Admin panel
+Routes follow the SIL specification with `/dashboard/*` for authenticated routes and `/auth/*` for authentication:
+
+**Authenticated Routes:**
+- `/dashboard/overview` - Dashboard overview
+- `/dashboard/portfolios`, `/dashboard/portfolios/:id` - Portfolio list and detail
+- `/dashboard/properties`, `/dashboard/properties/:id` - Property list and detail
+- `/dashboard/leases`, `/dashboard/leases/:id`, `/dashboard/leases/upload` - Lease list, detail, and upload
+- `/dashboard/discrepancies`, `/dashboard/discrepancies/:id` - Discrepancy list and detail
+- `/dashboard/cam-reconciliations`, `/dashboard/cam-reconciliations/:id` - CAM list and detail
+- `/dashboard/documents` - Document library
+- `/dashboard/invoices` - Invoice tracking
+- `/dashboard/calendar` - Calendar view
+- `/dashboard/reports`, `/dashboard/reports/:id` - Report list and detail
+- `/dashboard/exports`, `/dashboard/exports/new` - Export management
+- `/dashboard/settings` - Settings page
+- `/dashboard/admin` - Admin panel
+
+**Authentication Routes:**
+- `/auth/login` - User login
+- `/auth/register` - User registration
+- `/auth/forgot-password` - Password recovery
+- `/auth/reset-password` - Password reset
 
 ---
 

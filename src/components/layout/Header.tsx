@@ -112,7 +112,7 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
         </button>
 
         <button
-          onClick={() => navigate('/discrepancies')}
+          onClick={() => navigate('/dashboard/discrepancies')}
           className="flex items-center gap-0.5 px-2 py-1 bg-warning-50 border border-warning-100 rounded-full text-xs text-warning-700 hover:bg-warning-100 transition-colors"
         >
           <span className="w-2 h-2 rounded-full bg-warning-500 animate-pulse-dot shrink-0" />
@@ -187,14 +187,14 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
                   <p className="text-xs text-muted-foreground">{currentUser.email}</p>
                 </div>
                 <Link
-                  to="/settings"
+                  to="/dashboard/settings"
                   onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-foreground/80 hover:bg-accent"
                 >
                   <User className="w-4 h-4 text-muted-foreground/70" /> Profile
                 </Link>
                 <Link
-                  to="/settings"
+                  to="/dashboard/settings"
                   onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-foreground/80 hover:bg-accent"
                 >
@@ -205,7 +205,7 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
                   onClick={() => {
                     setUserMenuOpen(false);
                     toast.success('Signed out successfully');
-                    navigate('/login');
+                    navigate('/auth/login');
                   }}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-error-600 hover:bg-error-50 w-full text-left"
                 >

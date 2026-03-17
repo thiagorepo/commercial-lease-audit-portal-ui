@@ -9,19 +9,19 @@ import { cn } from '@/lib/utils';
 import { organization, currentUser } from '@/data/mock';
 
 const navItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, href: '/' },
-  { label: 'Portfolios', icon: Building2, href: '/portfolios' },
-  { label: 'Properties', icon: MapPin, href: '/properties' },
-  { label: 'Leases', icon: FileText, href: '/leases' },
-  { label: 'Discrepancies', icon: AlertTriangle, href: '/discrepancies' },
-  { label: 'CAM Audit', icon: Calculator, href: '/cam-reconciliations' },
-  { label: 'Documents', icon: File, href: '/documents' },
-  { label: 'Invoices', icon: Receipt, href: '/invoices' },
-  { label: 'Calendar', icon: Calendar, href: '/calendar' },
-  { label: 'Reports', icon: BarChart3, href: '/reports' },
-  { label: 'Exports', icon: Download, href: '/exports' },
-  { label: 'Settings', icon: Settings, href: '/settings' },
-  { label: 'Admin', icon: Shield, href: '/admin' },
+  { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/overview' },
+  { label: 'Portfolios', icon: Building2, href: '/dashboard/portfolios' },
+  { label: 'Properties', icon: MapPin, href: '/dashboard/properties' },
+  { label: 'Leases', icon: FileText, href: '/dashboard/leases' },
+  { label: 'Discrepancies', icon: AlertTriangle, href: '/dashboard/discrepancies' },
+  { label: 'CAM Audit', icon: Calculator, href: '/dashboard/cam-reconciliations' },
+  { label: 'Documents', icon: File, href: '/dashboard/documents' },
+  { label: 'Invoices', icon: Receipt, href: '/dashboard/invoices' },
+  { label: 'Calendar', icon: Calendar, href: '/dashboard/calendar' },
+  { label: 'Reports', icon: BarChart3, href: '/dashboard/reports' },
+  { label: 'Exports', icon: Download, href: '/dashboard/exports' },
+  { label: 'Settings', icon: Settings, href: '/dashboard/settings' },
+  { label: 'Admin', icon: Shield, href: '/dashboard/admin' },
 ];
 
 interface SidebarProps {
@@ -54,9 +54,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto py-4 px-2 scrollbar-thin">
         <ul className="space-y-0.5">
           {navItems.map((item) => {
-            const isActive = item.href === '/'
-              ? location.pathname === '/'
-              : location.pathname.startsWith(item.href);
+            const isActive = location.pathname.startsWith(item.href);
             return (
               <li key={item.href}>
                 <NavLink
@@ -130,9 +128,7 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
         <nav className="flex-1 overflow-y-auto py-4 px-2 scrollbar-thin">
           <ul className="space-y-0.5">
             {navItems.map((item) => {
-              const isActive = item.href === '/'
-                ? location.pathname === '/'
-                : location.pathname.startsWith(item.href);
+              const isActive = location.pathname.startsWith(item.href);
               return (
                 <li key={item.href}>
                   <NavLink

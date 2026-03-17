@@ -39,7 +39,7 @@ export function LeaseDetailPage() {
     return (
       <div className="text-center py-20">
         <p className="text-muted-foreground">Lease not found.</p>
-        <Link to="/leases" className="text-primary hover:text-primary text-sm font-medium mt-2 inline-block">Back to Leases</Link>
+        <Link to="/dashboard/leases" className="text-primary hover:text-primary text-sm font-medium mt-2 inline-block">Back to Leases</Link>
       </div>
     );
   }
@@ -367,7 +367,7 @@ export function LeaseDetailPage() {
           <div className="bg-card rounded-xl border border-border shadow-card">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
               <h3 className="text-sm font-semibold text-foreground">Reports ({leaseReports.length})</h3>
-              <Link to="/reports" className="text-sm text-primary hover:text-primary font-medium">View all reports</Link>
+              <Link to="/dashboard/reports" className="text-sm text-primary hover:text-primary font-medium">View all reports</Link>
             </div>
             {leaseReports.length === 0 ? (
               <EmptyState icon={BarChart3} title="No reports" description="Reports referencing this lease will appear here." action={{ label: 'View All Reports', onClick: () => navigate('/reports') }} />

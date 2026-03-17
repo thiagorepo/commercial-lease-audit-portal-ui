@@ -96,7 +96,7 @@ export function PropertyDetailPage() {
     return (
       <div className="text-center py-20">
         <p className="text-muted-foreground">Property not found.</p>
-        <Link to="/properties" className="text-primary hover:text-primary text-sm font-medium mt-2 inline-block">Back to Properties</Link>
+        <Link to="/dashboard/properties" className="text-primary hover:text-primary text-sm font-medium mt-2 inline-block">Back to Properties</Link>
       </div>
     );
   }
