@@ -160,7 +160,7 @@ export function PropertyDetailPage() {
                   <td className="px-5 py-3 text-sm text-foreground/80">{l.tenantName}</td>
                   <td className="px-5 py-3 text-sm text-foreground/80">{formatCurrency(l.baseRent)}/yr</td>
                   <td className="px-5 py-3 text-xs text-muted-foreground capitalize">{l.camType.replace(/-/g, ' ')}</td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground">{new Date(l.termEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                  <td className="px-5 py-3 text-sm text-muted-foreground">{new Date(l.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                   <td className="px-5 py-3"><StatusBadge status={l.status} /></td>
                 </tr>
               ))}

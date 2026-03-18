@@ -50,12 +50,12 @@ export interface Lease {
   portfolioName: string;
   status: LeaseStatus;
   camType: CAMType;
-  termStart: string;
-  termEnd: string;
+  start_date: string;
+  end_date: string;
   baseRent: number;
   squareFootage: number;
   renewalOption: boolean;
-  escalationRate: number;
+  cam_cap_percent: number;
   openDiscrepancies: number;
   totalInvoiced: number;
   totalAudited: number;

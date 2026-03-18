@@ -25,8 +25,8 @@ export function EditLeaseModal({ open, onClose, lease }: Props) {
     leaseNumber: lease?.leaseNumber ?? '',
     status: lease?.status ?? 'active',
     camType: lease?.camType ?? 'gross',
-    termStart: lease?.termStart?.split('T')[0] ?? '',
-    termEnd: lease?.termEnd?.split('T')[0] ?? '',
+    termStart: lease?.start_date?.split('T')[0] ?? '',
+    termEnd: lease?.end_date?.split('T')[0] ?? '',
     tenantName: lease?.tenantName ?? '',
     tenantContact: lease?.tenantContact ?? '',
     tenantPhone: lease?.tenantPhone ?? '',
@@ -34,7 +34,7 @@ export function EditLeaseModal({ open, onClose, lease }: Props) {
     tenantAddress: lease?.tenantAddress ?? '',
     baseRent: String(lease?.baseRent ?? ''),
     squareFootage: String(lease?.squareFootage ?? ''),
-    escalationRate: String(lease?.escalationRate ?? ''),
+    escalationRate: String(lease?.cam_cap_percent ?? ''),
     renewalOption: lease?.renewalOption ?? false,
   });
 
@@ -44,8 +44,8 @@ export function EditLeaseModal({ open, onClose, lease }: Props) {
         leaseNumber: lease.leaseNumber ?? '',
         status: lease.status ?? 'active',
         camType: lease.camType ?? 'gross',
-        termStart: lease.termStart?.split('T')[0] ?? '',
-        termEnd: lease.termEnd?.split('T')[0] ?? '',
+        termStart: lease.start_date?.split('T')[0] ?? '',
+        termEnd: lease.end_date?.split('T')[0] ?? '',
         tenantName: lease.tenantName ?? '',
         tenantContact: lease.tenantContact ?? '',
         tenantPhone: lease.tenantPhone ?? '',
@@ -53,7 +53,7 @@ export function EditLeaseModal({ open, onClose, lease }: Props) {
         tenantAddress: lease.tenantAddress ?? '',
         baseRent: String(lease.baseRent ?? ''),
         squareFootage: String(lease.squareFootage ?? ''),
-        escalationRate: String(lease.escalationRate ?? ''),
+        escalationRate: String(lease.cam_cap_percent ?? ''),
         renewalOption: lease.renewalOption ?? false,
       });
     }
@@ -112,7 +112,7 @@ export function EditLeaseModal({ open, onClose, lease }: Props) {
             </div>
             <div>
               <label className="text-xs font-medium text-foreground/80 block mb-1">Annual Escalation (%)</label>
-              <input type="number" step="0.1" value={form.escalationRate} onChange={e => set('escalationRate', e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring" />
+              <input type="number" step="0.1" value={form.cam_cap_percent} onChange={e => set('cam_cap_percent', e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring" />
             </div>
             <div>
               <label className="text-xs font-medium text-foreground/80 block mb-1">Term Start</label>

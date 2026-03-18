@@ -29,8 +29,8 @@ export function NewLeaseModal({ open, onClose }: Props) {
     propertyId: '',
     status: 'active',
     camType: 'gross' as CAMType,
-    termStart: undefined as Date | undefined,
-    termEnd: undefined as Date | undefined,
+    start_date: undefined as Date | undefined,
+    end_date: undefined as Date | undefined,
     tenantName: '',
     tenantContact: '',
     tenantPhone: '',
@@ -38,7 +38,7 @@ export function NewLeaseModal({ open, onClose }: Props) {
     tenantAddress: '',
     baseRent: '',
     squareFootage: '',
-    escalationRate: '',
+    cam_cap_percent: '',
     renewalOption: false,
   });
 
@@ -54,9 +54,9 @@ export function NewLeaseModal({ open, onClose }: Props) {
     if (step === 0) {
       if (!form.leaseNumber.trim()) e.leaseNumber = 'Required';
       if (!form.propertyId) e.propertyId = 'Required';
-      if (!form.termStart) e.termStart = 'Required';
-      if (!form.termEnd) e.termEnd = 'Required';
-      if (form.termStart && form.termEnd && form.termEnd <= form.termStart) e.termEnd = 'End must be after start date';
+      if (!form.start_date) e.start_date = 'Required';
+      if (!form.end_date) e.end_date = 'Required';
+      if (form.start_date && form.end_date && form.end_date <= form.start_date) e.end_date = 'End must be after start date';
     }
     if (step === 1) {
       if (!form.tenantName.trim()) e.tenantName = 'Required';
@@ -83,8 +83,8 @@ export function NewLeaseModal({ open, onClose }: Props) {
       setStep(0);
       setForm({
         leaseNumber: '', propertyId: '', status: 'active', camType: 'gross',
-        termStart: undefined, termEnd: undefined, tenantName: '', tenantContact: '', tenantPhone: '',
-        tenantEmail: '', tenantAddress: '', baseRent: '', squareFootage: '', escalationRate: '', renewalOption: false,
+        start_date: undefined, end_date: undefined, tenantName: '', tenantContact: '', tenantPhone: '',
+        tenantEmail: '', tenantAddress: '', baseRent: '', squareFootage: '', cam_cap_percent: '', renewalOption: false,
       });
     }, 1200);
   };
@@ -157,22 +157,22 @@ export function NewLeaseModal({ open, onClose }: Props) {
                 <div>
                   <label className="text-xs font-medium text-foreground/80 block mb-1">Term Start <span className="text-error-500">*</span></label>
                   <DatePicker
-                    value={form.termStart}
-                    onChange={d => set('termStart', d)}
+                    value={form.start_date}
+                    onChange={d => set('start_date', d)}
                     placeholder="Select start date"
-                    className={cn(errors.termStart && 'border-error-400 bg-error-50')}
+                    className={cn(errors.start_date && 'border-error-400 bg-error-50')}
                   />
-                  {errors.termStart && <p className="text-xs text-error-600 mt-1">{errors.termStart}</p>}
+                  {errors.start_date && <p className="text-xs text-error-600 mt-1">{errors.start_date}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground/80 block mb-1">Term End <span className="text-error-500">*</span></label>
                   <DatePicker
-                    value={form.termEnd}
-                    onChange={d => set('termEnd', d)}
+                    value={form.end_date}
+                    onChange={d => set('end_date', d)}
                     placeholder="Select end date"
-                    className={cn(errors.termEnd && 'border-error-400 bg-error-50')}
+                    className={cn(errors.end_date && 'border-error-400 bg-error-50')}
                   />
-                  {errors.termEnd && <p className="text-xs text-error-600 mt-1">{errors.termEnd}</p>}
+                  {errors.end_date && <p className="text-xs text-error-600 mt-1">{errors.end_date}</p>}
                 </div>
               </div>
             </>
@@ -237,7 +237,7 @@ export function NewLeaseModal({ open, onClose }: Props) {
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground/80 block mb-1">Annual Escalation Rate (%)</label>
-                  <input type="number" step="0.1" value={form.escalationRate} onChange={e => set('escalationRate', e.target.value)} placeholder="3.0"
+                  <input type="number" step="0.1" value={form.cam_cap_percent} onChange={e => set('cam_cap_percent', e.target.value)} placeholder="3.0"
                     className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring" />
                 </div>
                 <div className="flex items-center gap-3 pt-5">

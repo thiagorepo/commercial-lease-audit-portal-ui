@@ -16,7 +16,7 @@ import { FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import type { LeaseStatus } from '@/types';
 
-type SortKey = 'leaseNumber' | 'tenantName' | 'termStart' | 'termEnd' | 'baseRent' | 'openDiscrepancies';
+type SortKey = 'leaseNumber' | 'tenantName' | 'start_date' | 'end_date' | 'baseRent' | 'openDiscrepancies';
 type SortDir = 'asc' | 'desc';
 
 const filterChips = [
@@ -130,8 +130,8 @@ export function LeasesPage() {
                         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Property</span>
                       </th>
                       <th className="text-left px-3 py-3 hidden lg:table-cell">
-                        <button onClick={() => toggleSort('termStart')} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-accent-foreground">
-                          Term <SortIcon k="termStart" />
+                        <button onClick={() => toggleSort('start_date')} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-accent-foreground">
+                          Term <SortIcon k="start_date" />
                         </button>
                       </th>
                       <th className="text-left px-3 py-3 hidden xl:table-cell">
@@ -164,8 +164,8 @@ export function LeasesPage() {
                           <p className="text-xs text-muted-foreground/70">{lease.portfolioName}</p>
                         </td>
                         <td className="px-3 py-3 hidden lg:table-cell">
-                          <p className="text-xs text-muted-foreground font-mono">{formatDate(lease.termStart)}</p>
-                          <p className="text-xs text-muted-foreground/70 font-mono">{formatDate(lease.termEnd)}</p>
+                          <p className="text-xs text-muted-foreground font-mono">{formatDate(lease.start_date)}</p>
+                          <p className="text-xs text-muted-foreground/70 font-mono">{formatDate(lease.end_date)}</p>
                         </td>
                         <td className="px-3 py-3 hidden xl:table-cell">
                           <CAMTypeBadge type={lease.camType} />

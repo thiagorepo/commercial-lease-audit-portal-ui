@@ -61,11 +61,11 @@ export default function App() {
           <Route path="/dashboard/leases/upload" element={<LeaseUploadPage />} />
           <Route path="/dashboard/leases/:id" element={<LeaseDetailPage />} />
 
-          <Route path="/dashboard/discrepancies" element={<DiscrepanciesPage />} />
-          <Route path="/dashboard/discrepancies/:id" element={<DiscrepancyDetailPage />} />
+          <Route path="/dashboard/disputes" element={<DiscrepanciesPage />} />
+          <Route path="/dashboard/disputes/:id" element={<DiscrepancyDetailPage />} />
 
-          <Route path="/dashboard/cam-reconciliations" element={<CAMReconciliationsPage />} />
-          <Route path="/dashboard/cam-reconciliations/:id" element={<CAMDetailPage />} />
+          <Route path="/dashboard/audit" element={<CAMReconciliationsPage />} />
+          <Route path="/dashboard/audit/:id" element={<CAMDetailPage />} />
 
           <Route path="/dashboard/calendar" element={<CalendarPage />} />
 

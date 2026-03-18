@@ -69,7 +69,7 @@ export function DashboardPage() {
 
   const upcomingExpirations = leases
     .filter(l => l.status === 'active')
-    .map(l => ({ ...l, expirationDate: new Date(l.termEnd) }))
+    .map(l => ({ ...l, expirationDate: new Date(l.end_date) }))
     .filter(l => l.expirationDate >= today)
     .sort((a, b) => a.expirationDate.getTime() - b.expirationDate.getTime())
     .slice(0, 5);

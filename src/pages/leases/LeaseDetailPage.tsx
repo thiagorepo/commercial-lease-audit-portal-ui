@@ -96,13 +96,13 @@ export function LeaseDetailPage() {
               <h3 className="text-sm font-semibold text-foreground mb-4">Lease Details</h3>
               <dl className="space-y-3">
                 {[
-                  ['Term Start', formatDate(lease.termStart)],
-                  ['Term End', formatDate(lease.termEnd)],
+                  ['Term Start', formatDate(lease.start_date)],
+                  ['Term End', formatDate(lease.end_date)],
                   ['Base Rent', formatCurrency(lease.baseRent) + ' / year'],
                   ['Square Footage', `${lease.squareFootage.toLocaleString()} sq ft`],
                   ['CAM Type', <CAMTypeBadge type={lease.camType} />],
                   ['Renewal Option', lease.renewalOption ? <span className="flex items-center gap-1 text-success-700"><CheckCircle className="w-4 h-4" /> Yes</span> : 'No'],
-                  ['Escalation Rate', formatPercent(lease.escalationRate) + ' / year'],
+                  ['Escalation Rate', formatPercent(lease.cam_cap_percent) + ' / year'],
                 ].map(([label, val]) => (
                   <div key={String(label)} className="flex items-center justify-between gap-4">
                     <dt className="text-sm text-muted-foreground shrink-0">{label}</dt>
