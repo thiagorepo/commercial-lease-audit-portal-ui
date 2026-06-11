@@ -1,29 +1,72 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Upload, File, Download, Trash2, Eye, Search } from 'lucide-react';
+import { Upload, File, Download, Trash2, Eye, Search, RefreshCw } from 'lucide-react';
 import { PageHeader } from '@/components/custom/PageHeader';
 import { FileUploadModal } from '@/components/custom/FileUploadModal';
 import { TableSkeleton } from '@/components/custom/TableSkeleton';
 import { EmptyState } from '@/components/custom/EmptyState';
 import { Pagination } from '@/components/custom/Pagination';
-import { documents } from '@/data/mock';
+import { documentService, type ProcessDocumentResult } from '@/services/document.service';
 import { formatDate } from '@/lib/utils';
-import type { Document } from '@/types';
 import { toast } from 'sonner';
+
+/** Display shape for the documents table. */
+interface DocumentListItem {
+  id: string;
+  name: string;
+  type: string;
+  fileSize: string;
+  uploadedBy: string;
+  uploadedAt: string;
+  status: ProcessDocumentResult['status'];
+}
+
+/** Map service result to display-friendly row with fallbacks for missing fields. */
+function toListItem(result: ProcessDocumentResult): DocumentListItem {
+  const meta = result.metadata ?? {};
+  return {
+    id: result.id,
+    name: meta.name ?? result.id,
+    type: meta.type ?? 'other',
+    fileSize: meta.fileSize ?? '—',
+    uploadedBy: meta.uploadedBy ?? '—',
+    uploadedAt: meta.uploadedAt ?? new Date().toISOString(),
+    status: result.status,
+  };
+}
 
 export function DocumentsPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [docs, setDocs] = useState<DocumentListItem[]>([]);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [retiring, setRetrying] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
+  /** Default lease id for fetching documents. Will be replaced by context/routing. */
+  const DEFAULT_LEASE_ID = 'lease-1';
+
+  const fetchDocuments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const results = await documentService.getDocuments(DEFAULT_LEASE_ID);
+      setDocs(results.map(toListItem));
+    } catch (err) {
+      console.error('Failed to fetch documents:', err);
+      toast.error('Failed to load documents.');
+      setDocs([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filteredDocs = documents.filter(doc =>
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  const filteredDocs = docs.filter(doc =>
     doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -34,12 +77,40 @@ export function DocumentsPage() {
     currentPage * itemsPerPage
   );
 
-  const handleDownload = (doc: Document) => {
+  const handleDownload = (doc: DocumentListItem) => {
     toast.success(`Downloading ${doc.name}`);
   };
 
-  const handleDelete = (doc: Document) => {
-    toast.success(`Deleted ${doc.name}`);
+  const handleDelete = async (doc: DocumentListItem) => {
+    if (deleting) return;
+    setDeleting(doc.id);
+    try {
+      await documentService.deleteDocument(doc.id);
+      setDocs(prev => prev.filter(d => d.id !== doc.id));
+      toast.success(`Deleted ${doc.name}`);
+    } catch (err) {
+      console.error('Failed to delete document:', err);
+      toast.error(`Failed to delete ${doc.name}`);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const handleRetry = async (doc: DocumentListItem) => {
+    if (retiring) return;
+    setRetrying(doc.id);
+    try {
+      const result = await documentService.retryProcessing(doc.id);
+      setDocs(prev =>
+        prev.map(d => d.id === doc.id ? toListItem(result) : d),
+      );
+      toast.success(`Retrying processing for ${doc.name}`);
+    } catch (err) {
+      console.error('Failed to retry processing:', err);
+      toast.error(`Failed to retry ${doc.name}`);
+    } finally {
+      setRetrying(null);
+    }
   };
 
   return (
@@ -72,7 +143,7 @@ export function DocumentsPage() {
         </div>
 
         {loading ? (
-          <TableSkeleton rows={10} columns={6} />
+          <TableSkeleton rows={10} cols={6} />
         ) : filteredDocs.length === 0 ? (
           <EmptyState
             icon={File}
@@ -92,6 +163,7 @@ export function DocumentsPage() {
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">Name</th>
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3">Type</th>
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3">Size</th>
+                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3">Status</th>
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3">Uploaded By</th>
                     <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3">Date</th>
                     <th className="px-3 py-3" />
@@ -112,10 +184,31 @@ export function DocumentsPage() {
                         </span>
                       </td>
                       <td className="px-3 py-3 text-sm text-muted-foreground">{doc.fileSize}</td>
+                      <td className="px-3 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium capitalize ${
+                          doc.status === 'completed'
+                            ? 'bg-success-50 text-success-700'
+                            : doc.status === 'failed'
+                              ? 'bg-error-50 text-error-700'
+                              : 'bg-warning-50 text-warning-700'
+                        }`}>
+                          {doc.status}
+                        </span>
+                      </td>
                       <td className="px-3 py-3 text-sm text-muted-foreground">{doc.uploadedBy}</td>
                       <td className="px-3 py-3 text-sm text-muted-foreground">{formatDate(doc.uploadedAt)}</td>
                       <td className="px-3 py-3">
                         <div className="flex items-center justify-end gap-2">
+                          {doc.status === 'failed' && (
+                            <button
+                              onClick={() => handleRetry(doc)}
+                              disabled={retiring === doc.id}
+                              className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-warning-600 transition-colors disabled:opacity-50"
+                              title="Retry processing"
+                            >
+                              <RefreshCw className={`w-4 h-4 ${retiring === doc.id ? 'animate-spin' : ''}`} />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDownload(doc)}
                             className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
@@ -125,7 +218,8 @@ export function DocumentsPage() {
                           </button>
                           <button
                             onClick={() => handleDelete(doc)}
-                            className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-error-600 transition-colors"
+                            disabled={deleting === doc.id}
+                            className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-error-600 transition-colors disabled:opacity-50"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -140,8 +234,9 @@ export function DocumentsPage() {
             {totalPages > 1 && (
               <div className="p-4 border-t border-border/50">
                 <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
+                  page={currentPage}
+                  pageSize={itemsPerPage}
+                  total={filteredDocs.length}
                   onPageChange={setCurrentPage}
                 />
               </div>
@@ -150,7 +245,7 @@ export function DocumentsPage() {
         )}
       </div>
 
-      <FileUploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
+      <FileUploadModal open={uploadOpen} onClose={() => { setUploadOpen(false); fetchDocuments(); }} />
     </div>
   );
 }

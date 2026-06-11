@@ -118,10 +118,10 @@ export function SettingsPage() {
                     <label key={n.key} className="flex items-center justify-between cursor-pointer">
                       <span className="text-sm text-foreground/80">{n.label}</span>
                       <button
-                        onClick={() => setNotifications(p => ({ ...p, [n.key]: !p[n.key as keyof typeof p] }))}
-                        className={cn('relative w-11 h-6 rounded-full transition-colors', notifications[n.key as keyof typeof notifications] ? 'bg-primary' : 'bg-muted')}
+                        onClick={() => setNotifications(p => ({ ...p, [n.key]: !p[n.key] }))}
+                        className={cn('relative w-11 h-6 rounded-full transition-colors', notifications[n.key] ? 'bg-primary' : 'bg-muted')}
                       >
-                        <div className={cn('absolute top-1 w-4 h-4 bg-card rounded-full shadow transition-transform', notifications[n.key as keyof typeof notifications] ? 'left-6' : 'left-1')} />
+                        <div className={cn('absolute top-1 w-4 h-4 bg-card rounded-full shadow transition-transform', notifications[n.key] ? 'left-6' : 'left-1')} />
                       </button>
                     </label>
                   ))}
@@ -131,7 +131,7 @@ export function SettingsPage() {
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-3">Default Date Format</h3>
                 <div className="space-y-2">
-                  {['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD'].map(fmt => (
+                  {(['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD'] as const).map(fmt => (
                     <label key={fmt} className="flex items-center gap-3 cursor-pointer">
                       <div className={cn('w-4 h-4 rounded-full border-2 flex items-center justify-center', dateFormat === fmt ? 'border-primary' : 'border-border')}>
                         {dateFormat === fmt && <div className="w-2 h-2 rounded-full bg-primary" />}

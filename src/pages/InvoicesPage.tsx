@@ -86,7 +86,7 @@ export function InvoicesPage() {
         </div>
 
         {loading ? (
-          <TableSkeleton rows={15} columns={6} />
+          <TableSkeleton rows={15} cols={6} />
         ) : filteredInvoices.length === 0 ? (
           <EmptyState
             icon={FileText}
@@ -136,8 +136,9 @@ export function InvoicesPage() {
             {totalPages > 1 && (
               <div className="p-4 border-t border-border/50">
                 <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
+                  page={currentPage}
+                  pageSize={itemsPerPage}
+                  total={filteredInvoices.length}
                   onPageChange={setCurrentPage}
                 />
               </div>

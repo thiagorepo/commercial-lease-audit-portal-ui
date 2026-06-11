@@ -20,7 +20,7 @@ export function StatCard({ label, value, trend, sparkline, className }: StatCard
   const isPositive = trend ? (trend.positive !== undefined ? trend.positive : trend.direction === 'up') : null;
 
   return (
-    <div className={cn('bg-card rounded-xl border border-border p-5 shadow-card', className)}>
+    <div role="status" aria-label={label} className={cn('bg-card rounded-xl border border-border p-5 shadow-card', className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <p className="text-sm text-muted-foreground font-medium truncate">{label}</p>

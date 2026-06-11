@@ -222,7 +222,7 @@ export function LeasesPage() {
 
       <NewLeaseModal open={newLeaseOpen} onClose={() => setNewLeaseOpen(false)} />
       <EditLeaseModal
-        lease={editLeaseId ? leases.find(l => l.id === editLeaseId) : null}
+        lease={editLeaseId ? leases.find(l => l.id === editLeaseId) ?? null : null}
         open={editLeaseId !== null}
         onClose={() => setEditLeaseId(null)}
       />

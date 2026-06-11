@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Plus, MoreHorizontal, Eye, X } from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Eye, X, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/custom/PageHeader';
 import { QuickFilterChips } from '@/components/custom/QuickFilterChips';
 import { StatusBadge, PriorityBadge } from '@/components/custom/StatusBadge';
@@ -8,18 +8,11 @@ import { VarianceIndicator } from '@/components/custom/VarianceIndicator';
 import { Pagination } from '@/components/custom/Pagination';
 import { EmptyState } from '@/components/custom/EmptyState';
 import { NewDiscrepancyModal } from '@/components/custom/NewDiscrepancyModal';
-import { discrepancies } from '@/data/mock';
+import { discrepancyService } from '@/services/discrepancy.service';
+import type { DiscrepancyQuery, PaginatedResult } from '@/services/discrepancy.service';
 import { truncate } from '@/lib/utils';
 import { AlertTriangle } from 'lucide-react';
-import type { DiscrepancyStatus, DiscrepancyPriority } from '@/types';
-
-const statusChips = [
-  { value: 'all', label: 'All', count: discrepancies.length },
-  { value: 'open', label: 'Open', count: discrepancies.filter(d => d.status === 'open').length },
-  { value: 'pending', label: 'Pending', count: discrepancies.filter(d => d.status === 'pending').length },
-  { value: 'resolved', label: 'Resolved', count: discrepancies.filter(d => d.status === 'resolved').length },
-  { value: 'cancelled', label: 'Cancelled', count: discrepancies.filter(d => d.status === 'cancelled').length },
-];
+import type { Discrepancy, DiscrepancyStatus, DiscrepancyPriority, DiscrepancyCategory } from '@/types';
 
 const categories = ['all', 'rent-overcharge', 'cam-overcharge', 'late-fee', 'error', 'other'];
 const priorities = ['all', 'urgent', 'high', 'medium', 'low'];
@@ -27,7 +20,7 @@ const priorities = ['all', 'urgent', 'high', 'medium', 'low'];
 export function DiscrepanciesPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [page, setPage] = useState(1);
@@ -37,21 +30,78 @@ export function DiscrepanciesPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
-  const filtered = useMemo(() => {
-    let data = discrepancies;
-    if (statusFilter !== 'all') data = data.filter(d => d.status === statusFilter as DiscrepancyStatus);
-    if (categoryFilter !== 'all') data = data.filter(d => d.category === categoryFilter);
-    if (priorityFilter !== 'all') data = data.filter(d => d.priority === priorityFilter as DiscrepancyPriority);
-    if (search) {
-      const q = search.toLowerCase();
-      data = data.filter(d => d.leaseNumber.toLowerCase().includes(q) || d.tenantName.toLowerCase().includes(q) || d.description.toLowerCase().includes(q));
-    }
-    if (dateFrom) data = data.filter(d => d.createdAt >= dateFrom);
-    if (dateTo) data = data.filter(d => d.createdAt <= dateTo + 'T23:59:59Z');
-    return data;
-  }, [search, statusFilter, categoryFilter, priorityFilter, dateFrom, dateTo]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<PaginatedResult<Discrepancy>>({
+    data: [],
+    total: 0,
+    page: 1,
+    pageSize: 10,
+  });
 
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const [statusCounts, setStatusCounts] = useState<
+    Record<DiscrepancyStatus, number>
+  >({ open: 0, pending: 0, resolved: 0, cancelled: 0 });
+
+  const fetchDiscrepancies = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const query: DiscrepancyQuery = {
+        page,
+        pageSize,
+      };
+      if (statusFilter !== 'all') query.status = statusFilter as DiscrepancyStatus;
+      if (categoryFilter !== 'all') query.category = categoryFilter as DiscrepancyCategory;
+      if (priorityFilter !== 'all') query.priority = priorityFilter as DiscrepancyPriority;
+
+      const res = await discrepancyService.list(query);
+
+      // Client-side search filtering on top of server data
+      let filtered = res.data;
+      if (search) {
+        const q = search.toLowerCase();
+        filtered = filtered.filter(
+          (d) =>
+            d.leaseNumber.toLowerCase().includes(q) ||
+            d.tenantName.toLowerCase().includes(q) ||
+            d.description.toLowerCase().includes(q),
+        );
+      }
+      if (dateFrom) filtered = filtered.filter((d) => d.createdAt >= dateFrom);
+      if (dateTo) filtered = filtered.filter((d) => d.createdAt <= dateTo + 'T23:59:59Z');
+
+      setResult({ ...res, data: filtered });
+
+      // Fetch status counts for filter chips (unfiltered by status)
+      const stats = await discrepancyService.getStats();
+      setStatusCounts(stats.byStatus);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load discrepancies');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, pageSize, statusFilter, categoryFilter, priorityFilter, search, dateFrom, dateTo]);
+
+  useEffect(() => {
+    fetchDiscrepancies();
+  }, [fetchDiscrepancies]);
+
+  // Reset page when filters change (but not page itself)
+  const handleFilterChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (value: string) => {
+    setter(value);
+    setPage(1);
+  };
+
+  const totalAll = Object.values(statusCounts).reduce((a, b) => a + b, 0);
+
+  const statusChips = [
+    { value: 'all', label: 'All', count: totalAll },
+    { value: 'open', label: 'Open', count: statusCounts.open ?? 0 },
+    { value: 'pending', label: 'Pending', count: statusCounts.pending ?? 0 },
+    { value: 'resolved', label: 'Resolved', count: statusCounts.resolved ?? 0 },
+    { value: 'cancelled', label: 'Cancelled', count: statusCounts.cancelled ?? 0 },
+  ];
 
   return (
     <div>
@@ -73,11 +123,11 @@ export function DiscrepanciesPage() {
               placeholder="Search by lease, tenant, or description..."
               className="w-full border border-border rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring" />
           </div>
-          <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
+          <select value={categoryFilter} onChange={e => handleFilterChange(setCategoryFilter)(e.target.value)}
             className="border border-border rounded-lg px-3 py-2.5 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring">
             {categories.map(c => <option key={c} value={c}>{c === 'all' ? 'All Categories' : c.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
           </select>
-          <select value={priorityFilter} onChange={e => { setPriorityFilter(e.target.value); setPage(1); }}
+          <select value={priorityFilter} onChange={e => handleFilterChange(setPriorityFilter)(e.target.value)}
             className="border border-border rounded-lg px-3 py-2.5 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring">
             {priorities.map(p => <option key={p} value={p}>{p === 'all' ? 'All Priorities' : p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
           </select>
@@ -100,7 +150,17 @@ export function DiscrepanciesPage() {
         <QuickFilterChips chips={statusChips} selected={statusFilter} onChange={v => { setStatusFilter(v); setPage(1); }} />
 
         <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
-          {filtered.length === 0 ? (
+          {error ? (
+            <div className="p-8 text-center">
+              <p className="text-sm text-error-600 mb-2">{error}</p>
+              <button onClick={fetchDiscrepancies} className="text-sm text-primary hover:text-primary font-medium">Retry</button>
+            </div>
+          ) : loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+              <span className="ml-2 text-sm text-muted-foreground">Loading discrepancies...</span>
+            </div>
+          ) : result.data.length === 0 ? (
             <EmptyState icon={AlertTriangle} title="No discrepancies found" description="Try adjusting your filters." />
           ) : (
             <>
@@ -114,7 +174,7 @@ export function DiscrepanciesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {paginated.map(d => (
+                    {result.data.map(d => (
                       <tr key={d.id} className="border-b border-border/30 hover:bg-accent transition-colors">
                         <td className="px-4 py-3">
                           <Link to={`/discrepancies/${d.id}`} className="text-xs font-mono font-semibold text-primary hover:text-primary">{d.id.toUpperCase()}</Link>
@@ -163,7 +223,7 @@ export function DiscrepanciesPage() {
                 </table>
               </div>
               <div className="px-5 border-t border-border/50">
-                <Pagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} />
+                <Pagination page={page} pageSize={pageSize} total={result.total} onPageChange={setPage} />
               </div>
             </>
           )}

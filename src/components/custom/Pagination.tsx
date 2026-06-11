@@ -23,7 +23,7 @@ export function Pagination({ page, pageSize, total, onPageChange, onPageSizeChan
   });
 
   return (
-    <div className="flex items-center justify-between gap-4 py-3">
+    <div role="navigation" aria-label="Pagination" className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <span>Showing {start}–{end} of {total}</span>
         {onPageSizeChange && (

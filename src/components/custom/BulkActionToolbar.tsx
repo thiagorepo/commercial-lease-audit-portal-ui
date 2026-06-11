@@ -14,7 +14,7 @@ export function BulkActionToolbar({ selectedCount, onClear, onDelete, onExport, 
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
-      <div className="flex items-center gap-3 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700">
+      <div role="toolbar" aria-label="Bulk actions" className="flex items-center gap-3 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700">
         <span className="text-sm font-medium">{selectedCount} selected</span>
         <div className="w-px h-5 bg-slate-700" />
         {onAssign && (

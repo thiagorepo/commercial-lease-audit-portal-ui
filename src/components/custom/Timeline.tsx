@@ -19,9 +19,9 @@ interface TimelineProps {
 
 export function Timeline({ items, className }: TimelineProps) {
   return (
-    <div className={cn('space-y-0', className)}>
+    <ul role="list" aria-label="Activity timeline" className={cn('space-y-0', className)}>
       {items.map((item, i) => (
-        <div key={item.id} className="flex gap-3">
+        <li key={item.id} className="flex gap-3">
           <div className="flex flex-col items-center">
             <div className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center shrink-0 mt-0.5">
               {item.icon || (
@@ -46,9 +46,9 @@ export function Timeline({ items, className }: TimelineProps) {
               <p className="text-xs text-muted-foreground/70 whitespace-nowrap shrink-0">{formatDateTime(item.timestamp)}</p>
             </div>
           </div>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 

@@ -8,10 +8,12 @@ import { StatCard } from '@/components/custom/StatCard';
 import { VarianceIndicator } from '@/components/custom/VarianceIndicator';
 import { StatusBadge, PriorityBadge, CAMTypeBadge } from '@/components/custom/StatusBadge';
 import { Timeline, activityToTimelineItems } from '@/components/custom/Timeline';
-import { leases, discrepancies, activityLog, calendarEvents, sparklineData, currentUser } from '@/data/mock';
+import { discrepancyService, type DiscrepancyStats } from '@/services/discrepancy.service';
+import { leases, activityLog, calendarEvents, sparklineData, currentUser } from '@/data/mock';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { themeColors } from '@/lib/colors';
 import { toast } from 'sonner';
+import type { Discrepancy } from '@/types';
 
 const pieColors = { active: themeColors.success[500], expired: themeColors.secondary[400], pending: themeColors.warning[500], terminated: themeColors.error[500] };
 
@@ -57,12 +59,42 @@ export function DashboardPage() {
   const [newLeaseOpen, setNewLeaseOpen] = useState(false);
   const [newDiscOpen, setNewDiscOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DiscrepancyStats | null>(null);
+  const [recentDiscs, setRecentDiscs] = useState<Discrepancy[]>([]);
   const today = new Date();
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
+    let cancelled = false;
+
+    async function fetchDashboardData() {
+      try {
+        const [statsResult, listResult] = await Promise.all([
+          discrepancyService.getStats(),
+          discrepancyService.list({ page: 1, pageSize: 5 }),
+        ]);
+
+        if (cancelled) return;
+
+        setStats(statsResult);
+
+        const openDiscs = listResult.data.filter(d =>
+          d.status === 'open' || d.status === 'pending',
+        );
+        setRecentDiscs(openDiscs.slice(0, 5));
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+        if (!cancelled) {
+          toast.error('Failed to load dashboard data. Showing cached data.');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    fetchDashboardData();
+    return () => { cancelled = true; };
   }, []);
+
   const dayName = today.toLocaleDateString('en-US', { weekday: 'long' });
   const hour = today.getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -74,10 +106,16 @@ export function DashboardPage() {
     .sort((a, b) => a.expirationDate.getTime() - b.expirationDate.getTime())
     .slice(0, 5);
 
-  const openDiscs = discrepancies.filter(d => ['open','pending'].includes(d.status));
-  const totalRecovery = discrepancies.reduce((a, d) => a + (d.status === 'recovered' ? (d.recoveredAmount || 0) : d.status !== 'dismissed' && d.status !== 'false-positive' ? d.variance : 0), 0);
-  const recoveryRate = Math.round((discrepancies.filter(d => d.status === 'recovered').length / discrepancies.length) * 100);
-  const recentDiscs = openDiscs.slice(0, 5);
+  const openDiscCount = stats
+    ? (stats.byStatus['open'] ?? 0) + (stats.byStatus['pending'] ?? 0)
+    : 0;
+  const totalRecovery = stats?.totalVariance ?? 0;
+  const totalDiscCount = stats?.count ?? 0;
+  const recoveredCount = stats?.byStatus['resolved'] ?? 0;
+  const recoveryRate = totalDiscCount > 0
+    ? Math.round((recoveredCount / totalDiscCount) * 100)
+    : 0;
+
   const upcomingEvents = [...calendarEvents].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
   const timelineItems = activityToTimelineItems(activityLog.slice(0, 10));
 
@@ -85,7 +123,7 @@ export function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{greeting}, {currentUser.name.split(' ')[0]}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{greeting}, {currentUser.name.split(' ')[0]}</h1>
           <p className="text-sm text-muted-foreground">{dayName}, {formatDate(today)}</p>
         </div>
       </div>
@@ -96,7 +134,7 @@ export function DashboardPage() {
         ) : (
           <>
             <StatCard label="Total Leases" value={String(leases.length)} trend={{ value: 12, direction: 'up', positive: true }} sparkline={sparklineData.leases} />
-            <StatCard label="Active Discrepancies" value={String(openDiscs.length)} trend={{ value: -8, direction: 'down', positive: true }} sparkline={sparklineData.discrepancies} />
+            <StatCard label="Active Discrepancies" value={String(openDiscCount)} trend={{ value: -8, direction: 'down', positive: true }} sparkline={sparklineData.discrepancies} />
             <StatCard label="Potential Recovery" value={formatCurrency(totalRecovery)} trend={{ value: 23, direction: 'up', positive: true }} sparkline={sparklineData.recovery} />
             <StatCard label="Recovery Rate" value={`${recoveryRate}%`} trend={{ value: 5, direction: 'up', positive: true }} sparkline={sparklineData.rate} />
           </>
@@ -110,42 +148,45 @@ export function DashboardPage() {
               <h2 className="text-base font-semibold text-foreground">Recent Discrepancies</h2>
               <Link to="/dashboard/discrepancies" className="text-sm text-primary hover:text-primary font-medium">View all</Link>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px]">
-                <thead>
-                  <tr className="border-b border-border/50">
-                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3 w-44">Lease</th>
-                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3">Category</th>
-                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3 w-28">Variance</th>
-                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3 w-20">Priority</th>
-                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3 w-24">Status</th>
-                    <th className="px-3 py-3 w-12" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
-                  ) : recentDiscs.map(d => (
-                    <tr key={d.id} className="border-b border-border/30 hover:bg-accent transition-colors">
-                      <td className="px-5 py-3 w-44">
-                        <Link to={`/leases/${d.leaseId}`} className="text-sm font-medium text-primary hover:text-primary whitespace-nowrap">{d.leaseNumber}</Link>
-                        <p className="text-xs text-muted-foreground truncate max-w-[160px]">{d.tenantName}</p>
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-muted text-foreground/80 capitalize whitespace-nowrap">
-                          {d.category.replace(/-/g, ' ')}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 w-28"><VarianceIndicator amount={d.variance} percent={d.variancePercent} size="sm" /></td>
-                      <td className="px-3 py-3 w-20"><PriorityBadge priority={d.priority} /></td>
-                      <td className="px-3 py-3 w-24"><StatusBadge status={d.status} /></td>
-                      <td className="px-3 py-3 text-right w-12">
-                        <Link to={`/discrepancies/${d.id}`} className="text-sm text-primary hover:text-primary font-medium">View</Link>
-                      </td>
+            <div className="relative">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px]">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3 w-44">Lease</th>
+                      <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3">Category</th>
+                      <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3 w-28">Variance</th>
+                      <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3 w-20">Priority</th>
+                      <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-3 w-24">Status</th>
+                      <th className="px-3 py-3 w-12" />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
+                    ) : recentDiscs.map(d => (
+                      <tr key={d.id} className="border-b border-border/30 hover:bg-accent transition-colors">
+                        <td className="px-5 py-3 w-44">
+                          <Link to={`/leases/${d.leaseId}`} className="text-sm font-medium text-primary hover:text-primary whitespace-nowrap">{d.leaseNumber}</Link>
+                          <p className="text-xs text-muted-foreground truncate max-w-[160px]">{d.tenantName}</p>
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-muted text-foreground/80 capitalize whitespace-nowrap">
+                            {d.category.replace(/-/g, ' ')}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 w-28"><VarianceIndicator amount={d.variance} percent={d.variancePercent} size="sm" /></td>
+                        <td className="px-3 py-3 w-20"><PriorityBadge priority={d.priority} /></td>
+                        <td className="px-3 py-3 w-24"><StatusBadge status={d.status} /></td>
+                        <td className="px-3 py-3 text-right w-12">
+                          <Link to={`/discrepancies/${d.id}`} className="text-sm text-primary hover:text-primary font-medium">View</Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none sm:hidden" />
             </div>
           </div>
 
@@ -224,13 +265,13 @@ export function DashboardPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <button
           onClick={() => setNewLeaseOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
+          className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none flex-1 flex items-center justify-center gap-2 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
         >
           <PlusCircle className="w-4 h-4" /> New Lease
         </button>
         <button
           onClick={() => setNewDiscOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-primary text-primary text-sm font-semibold rounded-xl hover:bg-primary/10 transition-colors"
+          className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none flex-1 flex items-center justify-center gap-2 py-3 border-2 border-primary text-primary text-sm font-semibold rounded-xl hover:bg-primary/10 transition-colors"
         >
           <AlertTriangle className="w-4 h-4" /> New Discrepancy
         </button>
@@ -257,7 +298,7 @@ export function DashboardPage() {
             window.URL.revokeObjectURL(url);
             toast.success('Report exported successfully');
           }}
-          className="flex-1 flex items-center justify-center gap-2 py-3 border border-border text-foreground/80 text-sm font-semibold rounded-xl hover:bg-accent transition-colors"
+          className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none flex-1 flex items-center justify-center gap-2 py-3 border border-border text-foreground/80 text-sm font-semibold rounded-xl hover:bg-accent transition-colors"
         >
           <Download className="w-4 h-4" /> Export Report
         </button>

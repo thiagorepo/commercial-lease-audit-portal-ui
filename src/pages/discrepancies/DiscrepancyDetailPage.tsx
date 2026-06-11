@@ -1,37 +1,84 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle, ChevronDown, Loader2 } from 'lucide-react';
 import { StatusBadge, PriorityBadge } from '@/components/custom/StatusBadge';
 import { VarianceIndicator } from '@/components/custom/VarianceIndicator';
 import { Timeline, statusHistoryToTimelineItems } from '@/components/custom/Timeline';
-import { discrepancies, users } from '@/data/mock';
+import { discrepancyService } from '@/services/discrepancy.service';
+import { users } from '@/data/mock';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils';
 import { toast } from 'sonner';
-import type { DiscrepancyStatus } from '@/types';
+import type { Discrepancy, DiscrepancyStatus } from '@/types';
 
 export function DiscrepancyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const disc = discrepancies.find(d => d.id === id);
+
+  const [disc, setDisc] = useState<Discrepancy | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [status, setStatus] = useState<DiscrepancyStatus>('open');
   const [reassignOpen, setReassignOpen] = useState(false);
   const [assignedUser, setAssignedUser] = useState('');
   const [comments, setComments] = useState<Array<{ id: string; userName: string; createdAt: string; content: string }>>([]);
   const [newComment, setNewComment] = useState('');
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    if (disc) {
-      setStatus(disc.status);
-      setAssignedUser(disc.assignedTo ?? '');
-      setComments(disc.notes ?? []);
-    }
+    if (!id) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    discrepancyService.getById(id).then((data) => {
+      if (cancelled) return;
+      if (data) {
+        setDisc(data);
+        setStatus(data.status);
+        setAssignedUser(data.assignedTo ?? '');
+        setComments(data.notes ?? []);
+      }
+      setLoading(false);
+    }).catch((err) => {
+      if (cancelled) return;
+      setError(err instanceof Error ? err.message : 'Failed to load discrepancy');
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
   }, [id]);
 
-  if (!disc) {
+  const handleTransition = async (next: DiscrepancyStatus, message: string) => {
+    if (!id) return;
+    setUpdating(true);
+    try {
+      const updated = await discrepancyService.updateStatus(id, next, message);
+      if (updated) {
+        setStatus(next);
+        setDisc(updated);
+        toast.success(message);
+      } else {
+        toast.error('Failed to update status');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+        <span className="ml-2 text-sm text-muted-foreground">Loading discrepancy...</span>
+      </div>
+    );
+  }
+
+  if (error || !disc) {
     return (
       <div className="text-center py-20">
-        <p className="text-muted-foreground">Discrepancy not found.</p>
+        <p className="text-muted-foreground">{error ?? 'Discrepancy not found.'}</p>
         <Link to="/dashboard/discrepancies" className="text-primary hover:text-primary text-sm font-medium mt-2 inline-block">Back to Discrepancies</Link>
       </div>
     );
@@ -39,24 +86,16 @@ export function DiscrepancyDetailPage() {
 
   const statusHistory = statusHistoryToTimelineItems(disc.statusHistory);
 
-  const transition = (next: DiscrepancyStatus, message: string) => {
-    setStatus(next);
-    toast.success(message);
-  };
-
   const actions: Record<string, { label: string; color: string; onClick: () => void }[]> = {
     open: [
-      { label: 'Start Review', color: 'bg-primary hover:bg-primary/90 text-white', onClick: () => transition('pending', 'Status updated to Pending Review') },
-      { label: 'Dismiss', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => transition('dismissed', 'Discrepancy dismissed') },
+      { label: 'Start Review', color: 'bg-primary hover:bg-primary/90 text-white', onClick: () => handleTransition('pending', 'Status updated to Pending Review') },
+      { label: 'Dismiss', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => handleTransition('cancelled', 'Discrepancy dismissed') },
     ],
     pending: [
-      { label: 'Resolve', color: 'bg-success-500 hover:bg-success-600 text-white', onClick: () => transition('resolved', 'Discrepancy resolved') },
-      { label: 'Mark False Positive', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => transition('false-positive', 'Marked as false positive') },
-      { label: 'Dismiss', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => transition('dismissed', 'Discrepancy dismissed') },
+      { label: 'Resolve', color: 'bg-success-500 hover:bg-success-600 text-white', onClick: () => handleTransition('resolved', 'Discrepancy resolved') },
+      { label: 'Dismiss', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => handleTransition('cancelled', 'Discrepancy dismissed') },
     ],
-    resolved: [
-      { label: 'Record Recovery', color: 'bg-success-500 hover:bg-success-600 text-white', onClick: () => transition('recovered', 'Recovery recorded') },
-    ],
+    resolved: [],
   };
 
   const currentActions = actions[status] || [];
@@ -76,8 +115,8 @@ export function DiscrepancyDetailPage() {
           {currentActions.length > 0 && (
             <div className="flex gap-2">
               {currentActions.map(a => (
-                <button key={a.label} onClick={a.onClick} className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${a.color}`}>
-                  {a.label}
+                <button key={a.label} onClick={a.onClick} disabled={updating} className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${a.color}`}>
+                  {updating ? 'Updating...' : a.label}
                 </button>
               ))}
             </div>
@@ -119,7 +158,7 @@ export function DiscrepancyDetailPage() {
             </div>
           </div>
 
-          {(status === 'recovered' || disc.status === 'recovered') && disc.recoveredAmount !== undefined && (
+          {(status === 'resolved') && disc.recoveredAmount !== undefined && (
             <div className="bg-success-50 border border-success-200 rounded-xl p-5">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle className="w-5 h-5 text-success-600" />

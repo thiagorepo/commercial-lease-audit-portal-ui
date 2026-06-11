@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useEffect } from 'react';
 import { AppLayout } from '@/layouts/AppLayout';
 import { AuthLayout } from '@/layouts/AuthLayout';
@@ -38,8 +39,9 @@ export default function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
         <Route element={<AuthLayout />}>
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/auth/register" element={<RegisterPage />} />
@@ -61,11 +63,11 @@ export default function App() {
           <Route path="/dashboard/leases/upload" element={<LeaseUploadPage />} />
           <Route path="/dashboard/leases/:id" element={<LeaseDetailPage />} />
 
-          <Route path="/dashboard/disputes" element={<DiscrepanciesPage />} />
-          <Route path="/dashboard/disputes/:id" element={<DiscrepancyDetailPage />} />
+          <Route path="/dashboard/discrepancies" element={<DiscrepanciesPage />} />
+          <Route path="/dashboard/discrepancies/:id" element={<DiscrepancyDetailPage />} />
 
-          <Route path="/dashboard/audit" element={<CAMReconciliationsPage />} />
-          <Route path="/dashboard/audit/:id" element={<CAMDetailPage />} />
+          <Route path="/dashboard/cam-reconciliations" element={<CAMReconciliationsPage />} />
+          <Route path="/dashboard/cam-reconciliations/:id" element={<CAMDetailPage />} />
 
           <Route path="/dashboard/calendar" element={<CalendarPage />} />
 
@@ -84,7 +86,8 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/dashboard/overview" replace />} />
         </Route>
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

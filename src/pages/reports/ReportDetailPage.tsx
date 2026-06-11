@@ -1,18 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Archive, Send } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 import { StatusBadge } from '@/components/custom/StatusBadge';
 import { VarianceIndicator } from '@/components/custom/VarianceIndicator';
 import { Timeline, statusHistoryToTimelineItems } from '@/components/custom/Timeline';
-import { reports, discrepancies, leases } from '@/data/mock';
+import { reportService, type ReportData } from '@/services/report.service';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils';
 import { toast } from 'sonner';
-import type { ReportStatus } from '@/types';
-
-const formatDateTime2 = (date: string | Date) => {
-  const d = new Date(date);
-  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-};
+import type { Report, ReportStatus } from '@/types';
 
 const typeLabels: Record<string, string> = {
   'portfolio-summary': 'Portfolio Summary',
@@ -24,58 +19,97 @@ const typeLabels: Record<string, string> = {
 export function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const report = reports.find(r => r.id === id);
 
+  const [report, setReport] = useState<Report | null>(null);
+  const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<ReportStatus>('draft');
   const [replies, setReplies] = useState<Record<string, string>>({});
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (report) setStatus(report.status);
+  const fetchReport = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const [r, d] = await Promise.all([
+        reportService.getById(id),
+        reportService.generateData(id),
+      ]);
+      if (!r) {
+        setError('Report not found.');
+        setReport(null);
+        return;
+      }
+      setReport(r);
+      setStatus(r.status);
+      setReportData(d);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load report');
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
-  if (!report) {
-    return (
-      <div className="text-center py-20">
-        <p className="text-muted-foreground">Report not found.</p>
-        <Link to="/dashboard/reports" className="text-primary text-sm font-medium mt-2 inline-block">Back to Reports</Link>
-      </div>
-    );
-  }
+  useEffect(() => {
+    void fetchReport();
+  }, [fetchReport]);
 
-  const transition = (next: ReportStatus, message: string) => {
-    setStatus(next);
-    toast.success(message);
+  const transition = async (next: ReportStatus, message: string) => {
+    if (!id) return;
+    try {
+      const updated = await reportService.updateStatus(id, next);
+      if (updated) {
+        setStatus(next);
+        setReport(updated);
+        toast.success(message);
+      } else {
+        toast.error('Failed to update status');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Status update failed');
+    }
   };
 
   const workflowActions: Record<string, { label: string; color: string; onClick: () => void }[]> = {
     draft: [
-      { label: 'Submit for Review', color: 'bg-primary hover:bg-primary/90 text-white', onClick: () => transition('reviewed', 'Submitted for review') },
-      { label: 'Archive', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => transition('archived', 'Report archived') },
+      { label: 'Submit for Review', color: 'bg-primary hover:bg-primary/90 text-white', onClick: () => void transition('reviewed', 'Submitted for review') },
+      { label: 'Archive', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => void transition('archived', 'Report archived') },
     ],
     reviewed: [
-      { label: 'Finalize', color: 'bg-success-500 hover:bg-success-600 text-white', onClick: () => transition('final', 'Report finalized') },
-      { label: 'Reject', color: 'border border-error-200 text-error-600 hover:bg-error-50', onClick: () => transition('draft', 'Report returned to draft') },
+      { label: 'Finalize', color: 'bg-success-500 hover:bg-success-600 text-white', onClick: () => void transition('final', 'Report finalized') },
+      { label: 'Reject', color: 'border border-error-200 text-error-600 hover:bg-error-50', onClick: () => void transition('draft', 'Report returned to draft') },
     ],
     final: [
-      { label: 'Distribute', color: 'bg-success-500 hover:bg-success-600 text-white', onClick: () => transition('distributed', 'Report distributed') },
-      { label: 'Archive', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => transition('archived', 'Report archived') },
+      { label: 'Distribute', color: 'bg-success-500 hover:bg-success-600 text-white', onClick: () => void transition('distributed', 'Report distributed') },
+      { label: 'Archive', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => void transition('archived', 'Report archived') },
     ],
     distributed: [
-      { label: 'Archive', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => transition('archived', 'Report archived') },
+      { label: 'Archive', color: 'border border-border text-muted-foreground hover:bg-accent', onClick: () => void transition('archived', 'Report archived') },
     ],
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <span className="ml-3 text-sm text-muted-foreground">Loading report...</span>
+      </div>
+    );
+  }
+
+  if (error || !report) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-muted-foreground">{error || 'Report not found.'}</p>
+        <Link to="/reports" className="text-primary text-sm font-medium mt-2 inline-block">Back to Reports</Link>
+      </div>
+    );
+  }
+
   const actions = workflowActions[status] || [];
   const statusHistory = statusHistoryToTimelineItems(report.statusHistory);
-  const portfolioLeaseIds = report.portfolioId
-    ? new Set(leases.filter(l => l.portfolioId === report.portfolioId).map(l => l.id))
-    : null;
-  const relatedDiscs = report.leaseId
-    ? discrepancies.filter(d => d.leaseId === report.leaseId).slice(0, 8)
-    : portfolioLeaseIds
-      ? discrepancies.filter(d => portfolioLeaseIds.has(d.leaseId)).slice(0, 8)
-      : discrepancies.slice(0, 8);
 
   return (
     <div>
@@ -125,6 +159,63 @@ export function ReportDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
+          {reportData && (
+            <div className="bg-card rounded-xl border border-border shadow-card p-6">
+              <h2 className="text-base font-semibold text-foreground mb-4">Aggregated Data Preview</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-xs text-muted-foreground">Properties</p>
+                  <p className="text-lg font-bold text-foreground">{reportData.summary.totalProperties}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-xs text-muted-foreground">Leases</p>
+                  <p className="text-lg font-bold text-foreground">{reportData.summary.totalLeases}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-xs text-muted-foreground">Base Rent</p>
+                  <p className="text-lg font-bold text-foreground">{formatCurrency(reportData.summary.totalBaseRent)}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-xs text-muted-foreground">Total CAM</p>
+                  <p className="text-lg font-bold text-foreground">{formatCurrency(reportData.summary.totalCAM)}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-xs text-muted-foreground">Total Variance</p>
+                  <p className="text-lg font-bold text-foreground">{formatCurrency(reportData.summary.totalVariance)}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-xs text-muted-foreground">Recovery Rate</p>
+                  <p className="text-lg font-bold text-foreground">{reportData.summary.recoveryRate}%</p>
+                </div>
+              </div>
+              {reportData.topDiscrepancies.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">Top Discrepancies</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-muted border-b border-border/50">
+                        <tr>
+                          {['Category', 'Variance', 'Lease'].map(h => (
+                            <th key={h} className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reportData.topDiscrepancies.map(d => (
+                          <tr key={d.id} className="border-b border-border/30">
+                            <td className="px-3 py-2 text-sm text-foreground/80 capitalize">{d.category.replace(/-/g, ' ')}</td>
+                            <td className="px-3 py-2"><VarianceIndicator amount={d.variance} size="sm" /></td>
+                            <td className="px-3 py-2 text-xs text-muted-foreground font-mono">{d.lease}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="bg-card rounded-xl border border-border shadow-card p-6">
             <h2 className="text-base font-semibold text-foreground mb-3">Executive Summary</h2>
             <p className="text-sm text-foreground/80 leading-relaxed">{report.executiveSummary}</p>
@@ -172,34 +263,6 @@ export function ReportDetailPage() {
               </ol>
             </div>
           )}
-
-          <div className="bg-card rounded-xl border border-border shadow-card p-6">
-            <h2 className="text-base font-semibold text-foreground mb-4">Referenced Discrepancies</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-max">
-              <thead className="bg-muted border-b border-border/50">
-                <tr>
-                  {['ID', 'Tenant', 'Category', 'Variance', 'Status'].map(h => (
-                    <th key={h} className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-2">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {relatedDiscs.map(d => (
-                  <tr key={d.id} className="border-b border-border/30 hover:bg-accent">
-                    <td className="px-4 py-2">
-                      <Link to={`/discrepancies/${d.id}`} className="text-xs font-mono text-primary hover:text-primary">{d.id.toUpperCase()}</Link>
-                    </td>
-                    <td className="px-4 py-2 text-sm text-foreground/80">{d.tenantName}</td>
-                    <td className="px-4 py-2 text-xs text-muted-foreground capitalize">{d.category.replace(/-/g, ' ')}</td>
-                    <td className="px-4 py-2"><VarianceIndicator amount={d.variance} size="sm" /></td>
-                    <td className="px-4 py-2"><StatusBadge status={d.status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
-          </div>
         </div>
 
         <div className="space-y-5">

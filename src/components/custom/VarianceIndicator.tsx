@@ -27,12 +27,18 @@ export function VarianceIndicator({ amount, percent, showPercent = true, size = 
     Icon = TrendingUp;
   }
 
+  const ariaLabel = `Variance: ${formatCurrency(Math.abs(amount))}`;
+
   return (
-    <span className={cn(
-      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-medium whitespace-nowrap',
-      size === 'sm' ? 'text-xs' : 'text-sm',
-      className
-    )}>
+    <span
+      role="status"
+      aria-label={ariaLabel}
+      className={cn(
+        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-medium whitespace-nowrap',
+        size === 'sm' ? 'text-xs' : 'text-sm',
+        className
+      )}
+    >
       <Icon className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />
       <span>{formatCurrency(Math.abs(amount))}</span>
       {showPercent && percent !== undefined && (

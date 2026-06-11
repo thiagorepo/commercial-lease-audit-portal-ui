@@ -59,12 +59,11 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
               <li key={item.href}>
                 <NavLink
                   to={item.href}
-                  style={isActive ? { backgroundColor: '#F8FAFC', color: '#09090B', borderLeftColor: '#09090B' } : {}}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
+                    'flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-150',
                     collapsed ? 'justify-center' : '',
                     isActive
-                      ? 'border-l-4 font-semibold'
+                      ? 'border-l-4 border-l-foreground bg-accent/30 text-foreground font-semibold'
                       : 'text-sidebar-foreground/70 hover:bg-accent/10 hover:text-sidebar-foreground'
                   )}
                   title={collapsed ? item.label : undefined}
@@ -120,7 +119,7 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
             </div>
             <span className="text-sm font-semibold text-sidebar-foreground">LeaseGuard</span>
           </div>
-          <button onClick={onClose} className="p-1 text-sidebar-foreground/60 hover:text-sidebar-foreground rounded">
+          <button onClick={onClose} className="p-2 text-sidebar-foreground/60 hover:text-sidebar-foreground rounded">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -134,11 +133,10 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
                   <NavLink
                     to={item.href}
                     onClick={onClose}
-                    style={isActive ? { backgroundColor: '#F8FAFC', color: '#09090B', borderLeftColor: '#09090B' } : {}}
                     className={cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                      'flex items-center gap-3 px-3 py-3 min-h-[44px] rounded-lg text-sm font-medium transition-all',
                       isActive
-                        ? 'border-l-4 font-semibold'
+                        ? 'border-l-4 border-l-foreground bg-accent/30 text-foreground font-semibold'
                         : 'text-sidebar-foreground/70 hover:bg-accent/10 hover:text-sidebar-foreground'
                     )}
                   >

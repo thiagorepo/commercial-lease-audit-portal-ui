@@ -27,6 +27,12 @@ export function AppLayout() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:shadow-lg"
+      >
+        Skip to content
+      </a>
       <OfflineBanner />
       <div className="hidden lg:flex shrink-0">
         <Sidebar collapsed={sidebarCollapsed} onCollapse={setSidebarCollapsed} />
@@ -39,7 +45,7 @@ export function AppLayout() {
           onCommandPalette={() => setCommandPaletteOpen(true)}
           syncIndicator={<SyncIndicator status="synced" lastSyncTime={lastSyncTime} />}
         />
-        <main className="flex-1 overflow-y-auto scrollbar-thin">
+        <main id="main-content" className="flex-1 overflow-y-auto scrollbar-thin">
           <div className="max-w-[1400px] mx-auto p-4 md:p-6 animate-fade-in">
             <Outlet />
           </div>

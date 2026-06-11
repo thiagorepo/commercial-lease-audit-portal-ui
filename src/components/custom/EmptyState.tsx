@@ -14,7 +14,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div className={cn('flex flex-col items-center justify-center py-16 px-4 text-center', className)}>
+    <div role="status" className={cn('flex flex-col items-center justify-center py-16 px-4 text-center', className)}>
       <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
         <Icon className="w-8 h-8 text-muted-foreground/70" />
       </div>

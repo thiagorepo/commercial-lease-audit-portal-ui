@@ -206,6 +206,7 @@ export interface CalendarEvent {
   leaseNumber: string;
   tenantName: string;
   description: string;
+  notifyDaysBefore?: number;
 }
 
 export interface User {

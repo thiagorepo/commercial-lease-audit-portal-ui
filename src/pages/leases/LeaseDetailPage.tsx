@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Pencil as Edit, Upload, AlertTriangle, FileText, File, Building2, Calendar, BarChart3, DollarSign, CheckCircle } from 'lucide-react';
+import { Pencil as Edit, Upload, AlertTriangle, FileText, File, Building2, Calendar, BarChart3, DollarSign, CheckCircle, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/custom/PageHeader';
 import { StatCard } from '@/components/custom/StatCard';
 import { StatusBadge, CAMTypeBadge } from '@/components/custom/StatusBadge';
@@ -11,12 +11,15 @@ import { FileUploadModal } from '@/components/custom/FileUploadModal';
 import { EmptyState } from '@/components/custom/EmptyState';
 import { EditLeaseModal } from '@/components/custom/EditLeaseModal';
 import { NewDiscrepancyModal } from '@/components/custom/NewDiscrepancyModal';
-import { leases, discrepancies, camReconciliations, documents, activityLog, invoices, calendarEvents, reports } from '@/data/mock';
+import { leases, camReconciliations, documents, activityLog, invoices } from '@/data/mock';
+import { discrepancyService } from '@/services/discrepancy.service';
+import { calendarService } from '@/services/calendar.service';
 import { formatCurrency, formatDate, formatPercent } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import type { Discrepancy, CalendarEvent } from '@/types';
 
-const tabs = ['Overview', 'Documents', 'Discrepancies', 'CAM', 'Invoices', 'Calendar', 'Reports'];
+const tabs = ['Overview', 'Rent Schedule', 'CAM Audit', 'Documents', 'History'];
 
 const fileIcons: Record<string, React.ElementType> = {
   lease: FileText,
@@ -33,7 +36,52 @@ export function LeaseDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [newDiscOpen, setNewDiscOpen] = useState(false);
 
+  // Service-driven state
+  const [leaseDiscs, setLeaseDiscs] = useState<Discrepancy[]>([]);
+  const [discsLoading, setDiscsLoading] = useState(false);
+  const [discsError, setDiscsError] = useState<string | null>(null);
+
+  const [leaseCalendarEvents, setLeaseCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+
   const lease = leases.find(l => l.id === id) ?? null;
+
+  // Fetch discrepancies for this lease via service
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    setDiscsLoading(true);
+    setDiscsError(null);
+    discrepancyService.list({ leaseId: id, pageSize: 100 }).then((res) => {
+      if (cancelled) return;
+      setLeaseDiscs(res.data);
+      setDiscsLoading(false);
+    }).catch((err) => {
+      if (cancelled) return;
+      setDiscsError(err instanceof Error ? err.message : 'Failed to load discrepancies');
+      setDiscsLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  // Fetch calendar events for this lease via service
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    setEventsLoading(true);
+    setEventsError(null);
+    calendarService.getByLease(id).then((events) => {
+      if (cancelled) return;
+      setLeaseCalendarEvents(events);
+      setEventsLoading(false);
+    }).catch((err) => {
+      if (cancelled) return;
+      setEventsError(err instanceof Error ? err.message : 'Failed to load events');
+      setEventsLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [id]);
 
   if (!lease) {
     return (
@@ -44,11 +92,27 @@ export function LeaseDetailPage() {
     );
   }
 
-  const leaseDiscs = discrepancies.filter(d => d.leaseId === id);
   const leaseCams = camReconciliations.filter(c => c.leaseId === id);
   const leaseDocs = documents.filter(d => d.leaseId === id);
   const leaseInvoices = invoices.filter(i => i.leaseId === id);
   const leaseActivity = activityToTimelineItems(activityLog.filter(a => a.entityId === id || leaseDiscs.some(d => d.id === a.entityId)).slice(0, 10));
+
+  // Computed rent schedule data from lease
+  const leaseStart = new Date(lease.start_date);
+  const leaseEnd = new Date(lease.end_date);
+  const totalYears = leaseEnd.getFullYear() - leaseStart.getFullYear();
+  const escalationRate = lease.cam_cap_percent / 100;
+
+  const rentSchedule = Array.from({ length: Math.max(totalYears, 1) }, (_, i) => {
+    const year = leaseStart.getFullYear() + i;
+    const escalatedRent = lease.baseRent * Math.pow(1 + escalationRate, i);
+    return {
+      year,
+      yearNum: i + 1,
+      annualRent: Math.round(escalatedRent),
+      monthlyRent: Math.round(escalatedRent / 12),
+    };
+  });
 
   return (
     <div>
@@ -138,10 +202,248 @@ export function LeaseDetailPage() {
             <StatCard label="Potential Recovery" value={formatCurrency(lease.potentialRecovery)} />
           </div>
 
-          <div className="bg-card rounded-xl border border-border shadow-card p-5">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Recent Activity</h3>
-            {leaseActivity.length > 0 ? <Timeline items={leaseActivity} /> : <EmptyState icon={FileText} title="No activity yet" />}
+          {/* Critical dates summary */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { label: 'Lease Commencement', date: lease.start_date, icon: Calendar, color: 'bg-success-50 border-success-200 text-success-700' },
+              { label: 'Lease Expiration', date: lease.end_date, icon: Calendar, color: 'bg-error-50 border-error-200 text-error-700' },
+              { label: 'Next Escalation', date: (() => { try { const d = new Date(lease.start_date); if (isNaN(d.getTime())) return lease.start_date; d.setFullYear(new Date().getFullYear() + 1); return d.toISOString(); } catch { return lease.start_date; } })(), icon: Calendar, color: 'bg-warning-50 border-warning-100 text-warning-700' },
+            ].map(item => (
+              <div key={item.label} className={`p-4 rounded-xl border ${item.color}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <item.icon className="w-4 h-4 opacity-70" />
+                  <p className="text-xs font-semibold uppercase tracking-wider opacity-70">{item.label}</p>
+                </div>
+                <p className="text-xl font-bold">{formatDate(item.date)}</p>
+              </div>
+            ))}
           </div>
+
+          {/* Discrepancies summary */}
+          {discsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              <span className="ml-2 text-sm text-muted-foreground">Loading discrepancies...</span>
+            </div>
+          ) : discsError ? (
+            <div className="p-4 text-center text-sm text-error-600">{discsError}</div>
+          ) : leaseDiscs.length > 0 && (
+            <div className="bg-card rounded-xl border border-border shadow-card">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
+                <h3 className="text-sm font-semibold text-foreground">Discrepancies ({leaseDiscs.length})</h3>
+                <button onClick={() => setNewDiscOpen(true)} className="text-sm text-primary hover:text-primary font-medium">+ New Discrepancy</button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-max">
+                <thead className="bg-muted border-b border-border/50">
+                  <tr>
+                    {['ID', 'Category', 'Variance', 'Priority', 'Status', ''].map(h => (
+                      <th key={h} className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaseDiscs.map(d => (
+                    <tr key={d.id} className="border-b border-border/30 hover:bg-accent transition-colors">
+                      <td className="px-5 py-3">
+                        <Link to={`/discrepancies/${d.id}`} className="text-sm font-semibold text-primary hover:text-primary">{d.id.toUpperCase()}</Link>
+                      </td>
+                      <td className="px-5 py-3"><span className="text-sm text-foreground/80 capitalize">{d.category.replace(/-/g, ' ')}</span></td>
+                      <td className="px-5 py-3"><VarianceIndicator amount={d.variance} size="sm" /></td>
+                      <td className="px-5 py-3"><PriorityBadge priority={d.priority} /></td>
+                      <td className="px-5 py-3"><StatusBadge status={d.status} /></td>
+                      <td className="px-5 py-3 text-right">
+                        <Link to={`/discrepancies/${d.id}`} className="text-sm text-primary hover:text-primary font-medium">View</Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              </div>
+            </div>
+          )}
+
+          {/* CAM summary */}
+          {leaseCams.length > 0 && (
+            <div className="bg-card rounded-xl border border-border shadow-card">
+              <div className="px-5 py-4 border-b border-border/50">
+                <h3 className="text-sm font-semibold text-foreground">CAM Summary</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-5">
+                {leaseCams.slice(0, 3).map(c => (
+                  <div key={c.id} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">FY{c.fiscalYear}</span>
+                      <StatusBadge status={c.status} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-foreground">Billed: {formatCurrency(c.amountBilled)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <VarianceIndicator amount={c.variance} size="sm" />
+                      <Link to={`/cam-reconciliations/${c.id}`} className="text-xs text-primary hover:text-primary font-medium">View</Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'Rent Schedule' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatCard label="Base Rent (Year 1)" value={formatCurrency(lease.baseRent)} />
+            <StatCard label="Escalation Rate" value={formatPercent(lease.cam_cap_percent) + ' / year'} />
+            <StatCard label="Lease Term" value={`${totalYears} years`} />
+          </div>
+
+          <div className="bg-card rounded-xl border border-border shadow-card">
+            <div className="px-5 py-4 border-b border-border/50">
+              <h3 className="text-sm font-semibold text-foreground">Projected Rent Schedule</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-max">
+                <thead className="bg-muted border-b border-border/50">
+                  <tr>
+                    {['Year', 'Calendar Year', 'Annual Rent', 'Monthly Rent', 'Escalation'].map(h => (
+                      <th key={h} className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rentSchedule.map((row, idx) => {
+                    const prevRent = idx > 0 ? rentSchedule[idx - 1].annualRent : lease.baseRent;
+                    const increase = row.annualRent - prevRent;
+                    return (
+                      <tr key={row.year} className="border-b border-border/30 hover:bg-accent transition-colors">
+                        <td className="px-5 py-3 font-medium text-foreground text-sm">Year {row.yearNum}</td>
+                        <td className="px-5 py-3 text-sm text-foreground/80">{row.year}</td>
+                        <td className="px-5 py-3 text-sm font-semibold text-foreground">{formatCurrency(row.annualRent)}</td>
+                        <td className="px-5 py-3 text-sm text-foreground/80">{formatCurrency(row.monthlyRent)}</td>
+                        <td className="px-5 py-3 text-sm text-foreground/80">
+                          {idx === 0 ? <span className="text-muted-foreground">--</span> : <span className="text-warning-700">+{formatCurrency(increase)}</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Upcoming escalation events from service */}
+          {eventsLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              <span className="ml-2 text-sm text-muted-foreground">Loading events...</span>
+            </div>
+          ) : eventsError ? (
+            <div className="p-4 text-center text-sm text-error-600">{eventsError}</div>
+          ) : leaseCalendarEvents.filter(e => e.type === 'escalation').length > 0 && (
+            <div className="bg-card rounded-xl border border-border shadow-card">
+              <div className="px-5 py-4 border-b border-border/50">
+                <h3 className="text-sm font-semibold text-foreground">Upcoming Escalations</h3>
+              </div>
+              <div className="divide-y divide-border/30">
+                {leaseCalendarEvents.filter(e => e.type === 'escalation').map(event => (
+                  <div key={event.id} className="flex items-start gap-4 px-5 py-4">
+                    <div className="text-center shrink-0 w-14">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase">{new Date(event.date).toLocaleDateString('en-US', { month: 'short' })}</p>
+                      <p className="text-2xl font-bold text-foreground leading-tight">{new Date(event.date).getDate()}</p>
+                      <p className="text-xs text-muted-foreground/70">{new Date(event.date).getFullYear()}</p>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{event.title}</p>
+                      <p className="text-sm text-muted-foreground">{event.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'CAM Audit' && (
+        <div className="space-y-6">
+          {/* CAM summary metrics */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard label="Total CAM Reconciliations" value={String(leaseCams.length)} />
+            <StatCard label="Total Expenses" value={formatCurrency(leaseCams.reduce((sum, c) => sum + c.totalExpenses, 0))} />
+            <StatCard label="Total Billed" value={formatCurrency(leaseCams.reduce((sum, c) => sum + c.amountBilled, 0))} />
+            <StatCard label="Net Variance" value={formatCurrency(leaseCams.reduce((sum, c) => sum + c.variance, 0))} />
+          </div>
+
+          {/* CAM items table */}
+          <div className="bg-card rounded-xl border border-border shadow-card">
+            <div className="px-5 py-4 border-b border-border/50">
+              <h3 className="text-sm font-semibold text-foreground">CAM Reconciliations</h3>
+            </div>
+            {leaseCams.length === 0 ? <EmptyState icon={DollarSign} title="No CAM reconciliations" /> : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-max">
+                <thead className="bg-muted border-b border-border/50">
+                  <tr>
+                    {['Fiscal Year', 'Total Expenses', 'Billed', 'Variance', 'Status', ''].map(h => (
+                      <th key={h} className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaseCams.map(c => (
+                    <tr key={c.id} className="border-b border-border/30 hover:bg-accent transition-colors">
+                      <td className="px-5 py-3 font-medium text-foreground text-sm">{c.fiscalYear}</td>
+                      <td className="px-5 py-3 text-sm text-foreground/80">{formatCurrency(c.totalExpenses)}</td>
+                      <td className="px-5 py-3 text-sm text-foreground/80">{formatCurrency(c.amountBilled)}</td>
+                      <td className="px-5 py-3"><VarianceIndicator amount={c.variance} size="sm" /></td>
+                      <td className="px-5 py-3"><StatusBadge status={c.status} /></td>
+                      <td className="px-5 py-3 text-right">
+                        <Link to={`/cam-reconciliations/${c.id}`} className="text-sm text-primary hover:text-primary font-medium">View</Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              </div>
+            )}
+          </div>
+
+          {/* CAM line items detail */}
+          {leaseCams.length > 0 && (
+            <div className="bg-card rounded-xl border border-border shadow-card">
+              <div className="px-5 py-4 border-b border-border/50">
+                <h3 className="text-sm font-semibold text-foreground">Line Items (Latest Reconciliation)</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-max">
+                  <thead className="bg-muted border-b border-border/50">
+                    <tr>
+                      {['Category', 'Description', 'Total Amount', 'Tenant Share', 'Pass-Through'].map(h => (
+                        <th key={h} className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaseCams[0].items.map(item => (
+                      <tr key={item.id} className="border-b border-border/30 hover:bg-accent transition-colors">
+                        <td className="px-5 py-3 text-sm font-medium text-foreground">{item.category}</td>
+                        <td className="px-5 py-3 text-sm text-muted-foreground">{item.description}</td>
+                        <td className="px-5 py-3 text-sm text-foreground/80">{formatCurrency(item.totalAmount)}</td>
+                        <td className="px-5 py-3 text-sm text-foreground/80">{formatCurrency(item.tenantDollarAmount)} ({item.tenantSharePercent}%)</td>
+                        <td className="px-5 py-3">
+                          {item.isPassThrough
+                            ? <span className="text-xs font-medium text-success-700 bg-success-50 px-2 py-0.5 rounded-full">Yes</span>
+                            : <span className="text-xs font-medium text-error-700 bg-error-50 px-2 py-0.5 rounded-full">No</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -194,213 +496,12 @@ export function LeaseDetailPage() {
         </div>
       )}
 
-      {activeTab === 'Discrepancies' && (
-        <div className="bg-card rounded-xl border border-border shadow-card">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
-            <h3 className="text-sm font-semibold text-foreground">Discrepancies ({leaseDiscs.length})</h3>
-            <button onClick={() => setNewDiscOpen(true)} className="text-sm text-primary hover:text-primary font-medium">+ New Discrepancy</button>
-          </div>
-          {leaseDiscs.length === 0 ? <EmptyState icon={AlertTriangle} title="No discrepancies" description="No discrepancies found for this lease." /> : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-max">
-              <thead className="bg-muted border-b border-border/50">
-                <tr>
-                  {['ID', 'Category', 'Variance', 'Priority', 'Status', ''].map(h => (
-                    <th key={h} className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {leaseDiscs.map(d => (
-                  <tr key={d.id} className="border-b border-border/30 hover:bg-accent transition-colors">
-                    <td className="px-5 py-3">
-                      <Link to={`/discrepancies/${d.id}`} className="text-sm font-semibold text-primary hover:text-primary">{d.id.toUpperCase()}</Link>
-                    </td>
-                    <td className="px-5 py-3"><span className="text-sm text-foreground/80 capitalize">{d.category.replace(/-/g, ' ')}</span></td>
-                    <td className="px-5 py-3"><VarianceIndicator amount={d.variance} size="sm" /></td>
-                    <td className="px-5 py-3"><PriorityBadge priority={d.priority} /></td>
-                    <td className="px-5 py-3"><StatusBadge status={d.status} /></td>
-                    <td className="px-5 py-3 text-right">
-                      <Link to={`/discrepancies/${d.id}`} className="text-sm text-primary hover:text-primary font-medium">View</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
-          )}
+      {activeTab === 'History' && (
+        <div className="bg-card rounded-xl border border-border shadow-card p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Audit Timeline</h3>
+          {leaseActivity.length > 0 ? <Timeline items={leaseActivity} /> : <EmptyState icon={FileText} title="No activity yet" />}
         </div>
       )}
-
-      {activeTab === 'CAM' &&(
-        <div className="bg-card rounded-xl border border-border shadow-card">
-          <div className="px-5 py-4 border-b border-border/50">
-            <h3 className="text-sm font-semibold text-foreground">CAM Reconciliations</h3>
-          </div>
-          {leaseCams.length === 0 ? <EmptyState icon={DollarSign} title="No CAM reconciliations" /> : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-max">
-              <thead className="bg-muted border-b border-border/50">
-                <tr>
-                  {['Fiscal Year', 'Total Expenses', 'Billed', 'Variance', 'Status', ''].map(h => (
-                    <th key={h} className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {leaseCams.map(c => (
-                  <tr key={c.id} className="border-b border-border/30 hover:bg-accent transition-colors">
-                    <td className="px-5 py-3 font-medium text-foreground text-sm">{c.fiscalYear}</td>
-                    <td className="px-5 py-3 text-sm text-foreground/80">{formatCurrency(c.totalExpenses)}</td>
-                    <td className="px-5 py-3 text-sm text-foreground/80">{formatCurrency(c.amountBilled)}</td>
-                    <td className="px-5 py-3"><VarianceIndicator amount={c.variance} size="sm" /></td>
-                    <td className="px-5 py-3"><StatusBadge status={c.status} /></td>
-                    <td className="px-5 py-3 text-right">
-                      <Link to={`/cam-reconciliations/${c.id}`} className="text-sm text-primary hover:text-primary font-medium">View</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'Invoices' && (
-        <div className="bg-card rounded-xl border border-border shadow-card">
-          <div className="px-5 py-4 border-b border-border/50">
-            <h3 className="text-sm font-semibold text-foreground">Invoices</h3>
-          </div>
-          {leaseInvoices.length === 0 ? <EmptyState icon={FileText} title="No invoices" /> : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-max">
-              <thead className="bg-muted border-b border-border/50">
-                <tr>
-                  {['Invoice #', 'Date', 'Description', 'Amount', 'Status'].map(h => (
-                    <th key={h} className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {leaseInvoices.map(inv => (
-                  <tr key={inv.id} className="border-b border-border/30 hover:bg-accent transition-colors">
-                    <td className="px-5 py-3 font-mono text-sm text-foreground">{inv.invoiceNumber}</td>
-                    <td className="px-5 py-3 text-sm text-foreground/80">{formatDate(inv.date)}</td>
-                    <td className="px-5 py-3 text-sm text-muted-foreground">{inv.description}</td>
-                    <td className="px-5 py-3 text-sm font-semibold text-foreground">{formatCurrency(inv.amount)}</td>
-                    <td className="px-5 py-3"><StatusBadge status={inv.status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'Calendar' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { label: 'Lease Commencement', date: lease.termStart, icon: Calendar, color: 'bg-success-50 border-success-200 text-success-700' },
-              { label: 'Lease Expiration', date: lease.termEnd, icon: Calendar, color: 'bg-error-50 border-error-200 text-error-700' },
-              { label: 'Next Escalation', date: (() => { try { const d = new Date(lease.termStart); if (isNaN(d.getTime())) return lease.termStart; d.setFullYear(new Date().getFullYear() + 1); return d.toISOString(); } catch { return lease.termStart; } })(), icon: Calendar, color: 'bg-warning-50 border-warning-100 text-warning-700' },
-            ].map(item => (
-              <div key={item.label} className={`p-4 rounded-xl border ${item.color}`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <item.icon className="w-4 h-4 opacity-70" />
-                  <p className="text-xs font-semibold uppercase tracking-wider opacity-70">{item.label}</p>
-                </div>
-                <p className="text-xl font-bold">{formatDate(item.date)}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="bg-card rounded-xl border border-border shadow-card">
-            <div className="px-5 py-4 border-b border-border/50">
-              <h3 className="text-sm font-semibold text-foreground">Upcoming Events</h3>
-            </div>
-            {calendarEvents.filter(e => e.leaseId === id).length === 0 ? (
-              <EmptyState icon={Calendar} title="No scheduled events" description="Upcoming renewals, escalations, and deadlines will appear here." />
-            ) : (
-              <div className="divide-y divide-border/30">
-                {calendarEvents.filter(e => e.leaseId === id).map(event => {
-                  const typeColors: Record<string, string> = {
-                    renewal: 'bg-primary/10 border-primary/30 text-primary',
-                    escalation: 'bg-warning-50 border-warning-100 text-warning-700',
-                    expiration: 'bg-error-50 border-error-200 text-error-700',
-                    deadline: 'bg-secondary-100 border-secondary-200 text-secondary-700',
-                    audit: 'bg-success-50 border-success-200 text-success-700',
-                  };
-                  return (
-                    <div key={event.id} className="flex items-start gap-4 px-5 py-4">
-                      <div className="text-center shrink-0 w-14">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase">{new Date(event.date).toLocaleDateString('en-US', { month: 'short' })}</p>
-                        <p className="text-2xl font-bold text-foreground leading-tight">{new Date(event.date).getDate()}</p>
-                        <p className="text-xs text-muted-foreground/70">{new Date(event.date).getFullYear()}</p>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-semibold text-foreground truncate">{event.title}</p>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border capitalize shrink-0 ${typeColors[event.type] || typeColors.deadline}`}>
-                            {event.type}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{event.description}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'Reports' && (() => {
-        const leaseReports = reports.filter(r => r.leaseId === id || r.portfolioId === lease.portfolioId);
-        const typeLabels: Record<string, string> = {
-          'portfolio-summary': 'Portfolio', 'lease-specific': 'Lease', 'cam-audit': 'CAM Audit', 'annual-review': 'Annual',
-        };
-        return (
-          <div className="bg-card rounded-xl border border-border shadow-card">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
-              <h3 className="text-sm font-semibold text-foreground">Reports ({leaseReports.length})</h3>
-              <Link to="/dashboard/reports" className="text-sm text-primary hover:text-primary font-medium">View all reports</Link>
-            </div>
-            {leaseReports.length === 0 ? (
-              <EmptyState icon={BarChart3} title="No reports" description="Reports referencing this lease will appear here." action={{ label: 'View All Reports', onClick: () => navigate('/reports') }} />
-            ) : (
-              <table className="w-full">
-                <thead className="bg-muted border-b border-border/50">
-                  <tr>
-                    {['Report', 'Type', 'Period', 'Discrepancies', 'Recovery', 'Status'].map(h => (
-                      <th key={h} className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaseReports.map(r => (
-                    <tr key={r.id} className="border-b border-border/30 hover:bg-accent transition-colors">
-                      <td className="px-5 py-3">
-                        <Link to={`/reports/${r.id}`} className="text-sm font-semibold text-primary hover:text-primary">{r.title}</Link>
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className="text-xs bg-muted text-foreground/80 px-2 py-0.5 rounded-md">{typeLabels[r.type] || r.type}</span>
-                      </td>
-                      <td className="px-5 py-3 text-xs text-muted-foreground">{formatDate(r.periodStart)} — {formatDate(r.periodEnd)}</td>
-                      <td className="px-5 py-3 text-sm text-foreground/80">{r.discrepancyCount}</td>
-                      <td className="px-5 py-3 text-sm font-semibold text-success-700">{formatCurrency(r.recoveryAmount)}</td>
-                      <td className="px-5 py-3"><StatusBadge status={r.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        );
-      })()}
 
       <FileUploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
       <EditLeaseModal open={editOpen} onClose={() => setEditOpen(false)} lease={lease} />

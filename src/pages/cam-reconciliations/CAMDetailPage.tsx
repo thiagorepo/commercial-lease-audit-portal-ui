@@ -4,22 +4,55 @@ import { ArrowLeft, CheckCircle, Shield, Lock } from 'lucide-react';
 import { StatusBadge } from '@/components/custom/StatusBadge';
 import { VarianceIndicator } from '@/components/custom/VarianceIndicator';
 import { StatCard } from '@/components/custom/StatCard';
-import { camReconciliations } from '@/data/mock';
+import { StatCardSkeleton } from '@/components/custom/TableSkeleton';
+import { TableSkeleton } from '@/components/custom/TableSkeleton';
+import { camReconciliations as mockData } from '@/data/mock';
 import { formatCurrency, formatPercent, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import type { CAMStatus } from '@/types';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
+import type { CAMStatus, CAMItem, CAMReconciliation } from '@/types';
 
 export function CAMDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const cam = camReconciliations.find(c => c.id === id);
+  const [cam, setCam] = useState<CAMReconciliation | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const [status, setStatus] = useState<CAMStatus>('draft');
+  const [selectedItem, setSelectedItem] = useState<CAMItem | null>(null);
+  const [note, setNote] = useState('');
 
   useEffect(() => {
-    if (cam) setStatus(cam.status);
+    let cancelled = false;
+    // Simulates a service call: replace mockData with camReconciliationService.getById(id)
+    // when the service is implemented.
+    const t = setTimeout(() => {
+      if (!cancelled) {
+        const found = mockData.find(c => c.id === id) ?? null;
+        setCam(found);
+        if (found) setStatus(found.status);
+        setLoading(false);
+      }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
   }, [id]);
+
+  if (loading) {
+    return (
+      <div>
+        <div className="mb-6">
+          <div className="h-4 w-32 bg-muted rounded animate-pulse mb-3" />
+          <div className="h-6 w-64 bg-muted rounded animate-pulse" />
+        </div>
+        <StatCardSkeleton count={4} />
+        <div className="mt-6">
+          <TableSkeleton rows={8} cols={7} />
+        </div>
+      </div>
+    );
+  }
 
   if (!cam) {
     return (
@@ -56,12 +89,6 @@ export function CAMDetailPage() {
   };
 
   const actions = workflowActions[status] || [];
-
-  const categoryTotals = cam.items.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = 0;
-    acc[item.category] += item.tenantDollarAmount;
-    return acc;
-  }, {} as Record<string, number>);
 
   return (
     <div>
@@ -162,7 +189,11 @@ export function CAMDetailPage() {
               ).map(([category, items]) => (
                 <React.Fragment key={category}>
                   {items.map((item, itemIdx) => (
-                    <tr key={item.id} className={cn('border-b border-border/30 hover:bg-accent transition-colors', itemIdx === 0 ? 'border-t border-border' : '')}>
+                    <tr
+                      key={item.id}
+                      className={cn('border-b border-border/30 hover:bg-accent transition-colors cursor-pointer', itemIdx === 0 ? 'border-t border-border' : '')}
+                      onClick={() => { setSelectedItem(item); setNote(''); }}
+                    >
                       <td className="px-5 py-3">
                         {itemIdx === 0 ? <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-muted text-foreground/80">{item.category}</span> : null}
                       </td>
@@ -215,6 +246,73 @@ export function CAMDetailPage() {
           </ul>
         </div>
       )}
+
+      <Sheet open={!!selectedItem} onOpenChange={(open) => { if (!open) setSelectedItem(null); }}>
+        <SheetContent className="w-full sm:max-w-md">
+          {selectedItem && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="capitalize">{selectedItem.category.replace(/-/g, ' ')}</SheetTitle>
+              </SheetHeader>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Description</p>
+                  <p className="text-sm font-medium text-foreground">{selectedItem.description}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Amount</p>
+                    <p className="text-sm font-semibold text-foreground">{formatCurrency(selectedItem.totalAmount)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Tenant Amount</p>
+                    <p className="text-sm font-semibold text-foreground">{formatCurrency(selectedItem.tenantDollarAmount)}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Tenant Share</p>
+                  <p className="text-sm font-semibold text-foreground">{formatPercent(selectedItem.tenantSharePercent)}</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pass-through</p>
+                    <p className="text-sm font-medium text-foreground">{selectedItem.isPassThrough ? 'Yes' : 'No'}</p>
+                  </div>
+                  {selectedItem.capPercent && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Cap</p>
+                      <p className="text-sm font-medium text-warning-700">{selectedItem.capPercent}%</p>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Notes</p>
+                  <Textarea
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Add a note about this item..."
+                    className="min-h-[80px]"
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => { toast.success('Item approved'); setSelectedItem(null); }}
+                    className="flex-1 py-2 bg-success-500 text-white text-sm font-medium rounded-lg hover:bg-success-600 transition-colors"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => { toast.warning('Item flagged'); setSelectedItem(null); }}
+                    className="flex-1 py-2 border border-warning-200 text-warning-700 text-sm font-medium rounded-lg hover:bg-warning-50 transition-colors"
+                  >
+                    Flag
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

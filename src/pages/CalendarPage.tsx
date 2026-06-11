@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, AlertTriangle, Clock, RefreshCw } from 'lucide-react';
 import { PageHeader } from '@/components/custom/PageHeader';
-import { calendarEvents } from '@/data/mock';
+import { calendarService } from '@/services/calendar.service';
 import { Link } from 'react-router-dom';
-import type { EventType } from '@/types';
+import { toast } from 'sonner';
+import type { CalendarEvent, EventType } from '@/types';
 
 const eventColors: Record<EventType, string> = {
   renewal: 'bg-success-500',
@@ -25,6 +26,24 @@ export function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [activeFilters, setActiveFilters] = useState<Set<EventType>>(new Set(['renewal', 'escalation', 'expiration', 'deadline', 'audit']));
   const [activeDate, setActiveDate] = useState<string | null>(null);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchEvents = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await calendarService.getUpcoming();
+      setEvents(data);
+    } catch (err) {
+      toast.error('Failed to load calendar events');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const toggleFilter = (type: EventType) => {
     setActiveFilters(prev => {
@@ -39,7 +58,7 @@ export function CalendarPage() {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const filteredEvents = calendarEvents.filter(e => activeFilters.has(e.type as EventType));
+  const filteredEvents = events.filter(e => activeFilters.has(e.type));
 
   const getEventsForDate = (day: number) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -103,7 +122,7 @@ export function CalendarPage() {
                 </div>
                 <div className="space-y-0.5">
                   {dayEvents.slice(0, 2).map(ev => (
-                    <div key={ev.id} className={`w-2 h-2 rounded-full ${eventColors[ev.type as EventType]} inline-block mr-0.5`} title={ev.title} />
+                    <div key={ev.id} className={`w-2 h-2 rounded-full ${eventColors[ev.type]} inline-block mr-0.5`} title={ev.title} />
                   ))}
                   {dayEvents.length > 2 && (
                     <span className="text-xs text-muted-foreground/70">+{dayEvents.length - 2}</span>
@@ -115,7 +134,7 @@ export function CalendarPage() {
                     <p className="text-xs font-semibold text-muted-foreground mb-2">{new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                     <div className="space-y-2">
                       {dayEvents.map(ev => (
-                        <Link key={ev.id} to={`/leases/${ev.leaseId}`} className={`block p-2 rounded-lg border text-xs hover:opacity-80 transition-opacity ${eventBgColors[ev.type as EventType]}`}>
+                        <Link key={ev.id} to={`/leases/${ev.leaseId}`} className={`block p-2 rounded-lg border text-xs hover:opacity-80 transition-opacity ${eventBgColors[ev.type]}`}>
                           <p className="font-semibold">{ev.title.split(': ')[1] || ev.title}</p>
                           <p className="opacity-75 mt-0.5">{ev.leaseNumber}</p>
                         </Link>
@@ -130,23 +149,43 @@ export function CalendarPage() {
       </div>
 
       <div className="mt-6 bg-card rounded-xl border border-border shadow-card p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-4">All Upcoming Events</h3>
-        <div className="space-y-2">
-          {filteredEvents.sort((a, b) => a.date.localeCompare(b.date)).map(ev => (
-            <div key={ev.id} className={`flex items-start gap-3 p-3 rounded-lg border ${eventBgColors[ev.type as EventType]}`}>
-              <div className="text-center w-12 shrink-0">
-                <p className="text-xs font-bold uppercase">{new Date(ev.date).toLocaleDateString('en-US', { month: 'short' })}</p>
-                <p className="text-xl font-bold leading-none">{new Date(ev.date).getDate()}</p>
-                <p className="text-xs">{new Date(ev.date).getFullYear()}</p>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold">{ev.title.split(': ')[1] || ev.title}</p>
-                <p className="text-xs opacity-75 mt-0.5">{ev.description}</p>
-                <Link to={`/leases/${ev.leaseId}`} className="text-xs font-medium underline mt-1 inline-block">{ev.leaseNumber}</Link>
-              </div>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-foreground">All Upcoming Events</h3>
+          <button
+            onClick={fetchEvents}
+            disabled={loading}
+            className="p-1.5 text-muted-foreground hover:text-accent-foreground hover:bg-accent rounded-lg transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+            Loading events...
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            No upcoming events found.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {[...filteredEvents].sort((a, b) => a.date.localeCompare(b.date)).map(ev => (
+              <div key={ev.id} className={`flex items-start gap-3 p-3 rounded-lg border ${eventBgColors[ev.type]}`}>
+                <div className="text-center w-12 shrink-0">
+                  <p className="text-xs font-bold uppercase">{new Date(ev.date).toLocaleDateString('en-US', { month: 'short' })}</p>
+                  <p className="text-xl font-bold leading-none">{new Date(ev.date).getDate()}</p>
+                  <p className="text-xs">{new Date(ev.date).getFullYear()}</p>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">{ev.title.split(': ')[1] || ev.title}</p>
+                  <p className="text-xs opacity-75 mt-0.5">{ev.description}</p>
+                  <Link to={`/leases/${ev.leaseId}`} className="text-xs font-medium underline mt-1 inline-block">{ev.leaseNumber}</Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

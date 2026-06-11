@@ -3,8 +3,10 @@ import { Bell, Search, Menu, Home, LogOut, User, Settings, Moon, Sun } from 'luc
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { currentUser } from '@/data/mock';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { notificationService } from '@/services/notification.service';
+import type { Notification } from '@/services/notification.service';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -56,7 +58,55 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
   const breadcrumbs = buildBreadcrumbs(location.pathname);
+
+  const userId = currentUser.id;
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const count = await notificationService.getUnreadCount(userId);
+      setUnreadCount(count);
+    } catch {
+      // Silently fail — badge count is non-critical
+    }
+  }, [userId]);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setNotificationsLoading(true);
+      const data = await notificationService.list(userId);
+      setNotifications(data);
+    } catch {
+      toast.error('Failed to load notifications');
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [userId]);
+
+  // Subscribe to notification events for real-time badge updates
+  useEffect(() => {
+    const unsubscribe = notificationService.subscribeToEvents();
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Fetch unread count on mount and periodically refresh
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
+
+  // Fetch notifications when dropdown opens
+  useEffect(() => {
+    if (notificationsOpen) {
+      fetchNotifications();
+    }
+  }, [notificationsOpen, fetchNotifications]);
 
   useEffect(() => {
     const isDarkMode = document.documentElement.classList.contains('dark');
@@ -70,11 +120,39 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
     localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
   };
 
+  const handleMarkRead = async (notif: Notification) => {
+    try {
+      await notificationService.markRead(notif.id);
+      setNotifications(prev =>
+        prev.map(n => (n.id === notif.id ? { ...n, read: true } : n)),
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      if (notif.link) {
+        navigate(notif.link);
+      }
+      setNotificationsOpen(false);
+    } catch {
+      toast.error('Failed to mark notification as read');
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationService.markAllRead(userId);
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch {
+      toast.error('Failed to mark all notifications as read');
+    }
+  };
+
+  const hasUnread = unreadCount > 0;
+
   return (
     <header className="h-16 bg-card border-b border-border flex items-center gap-4 px-4 shrink-0">
       <button
         onClick={onMenuClick}
-        className="lg:hidden p-2 text-muted-foreground hover:text-accent-foreground hover:bg-accent rounded-lg"
+        className="lg:hidden p-2.5 text-muted-foreground hover:text-accent-foreground hover:bg-accent rounded-lg"
       >
         <Menu className="w-5 h-5" />
       </button>
@@ -104,7 +182,7 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
         {syncIndicator && <div className="hidden md:block">{syncIndicator}</div>}
         <button
           onClick={onCommandPalette}
-          className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground bg-muted hover:bg-accent rounded-lg transition-colors"
+          className="hidden md:flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground bg-muted hover:bg-accent rounded-lg transition-colors"
         >
           <Search className="w-4 h-4" />
           <span>Search...</span>
@@ -121,7 +199,7 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
 
         <button
           onClick={toggleTheme}
-          className="p-2 text-muted-foreground hover:text-accent-foreground hover:bg-accent rounded-lg transition-colors"
+          className="p-2.5 text-muted-foreground hover:text-accent-foreground hover:bg-accent rounded-lg transition-colors"
           title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -130,38 +208,54 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
         <div className="relative">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="relative p-2 text-muted-foreground hover:text-accent-foreground hover:bg-accent rounded-lg transition-colors"
+            aria-expanded={notificationsOpen}
+            aria-haspopup="true"
+            className="relative p-2.5 text-muted-foreground hover:text-accent-foreground hover:bg-accent rounded-lg transition-colors"
           >
             <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error-500 rounded-full" />
+            {hasUnread && (
+              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 bg-error-500 rounded-full flex items-center justify-center">
+                <span className="text-[10px] font-bold text-white leading-none">{unreadCount > 9 ? '9+' : unreadCount}</span>
+              </span>
+            )}
           </button>
 
           {notificationsOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setNotificationsOpen(false)} />
-              <div className="absolute right-0 top-10 z-20 w-80 bg-card border border-border rounded-xl shadow-lg">
-                <div className="px-4 py-3 border-b border-border/50">
+              <div role="menu" className="absolute right-0 top-10 z-20 w-80 bg-card border border-border rounded-xl shadow-lg">
+                <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
                   <p className="text-sm font-semibold text-foreground">Notifications</p>
+                  {hasUnread && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Mark all read
+                    </button>
+                  )}
                 </div>
                 <div className="max-h-96 overflow-y-auto">
-                  {[
-                    { title: 'Lease expiring soon', desc: 'One Harbor Plaza - Expires in 30 days', time: '2 hours ago' },
-                    { title: 'CAM reconciliation due', desc: 'Midtown Tower - Q1 2025', time: '5 hours ago' },
-                    { title: 'Discrepancy resolved', desc: 'PRE-036 has been approved', time: '1 day ago' },
-                  ].map((notif, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        toast.info(notif.title);
-                        setNotificationsOpen(false);
-                      }}
-                      className="w-full px-4 py-3 border-b border-border/30 hover:bg-accent transition-colors text-left"
-                    >
-                      <p className="text-sm font-medium text-foreground">{notif.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{notif.desc}</p>
-                      <p className="text-xs text-muted-foreground/70 mt-1">{notif.time}</p>
-                    </button>
-                  ))}
+                  {notificationsLoading ? (
+                    <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading...</div>
+                  ) : notifications.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-sm text-muted-foreground">No notifications</div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <button
+                        key={notif.id}
+                        role="menuitem"
+                        onClick={() => handleMarkRead(notif)}
+                        className={`w-full px-4 py-3 border-b border-border/30 hover:bg-accent transition-colors text-left ${!notif.read ? 'bg-primary/5' : ''}`}
+                      >
+                        <p className="text-sm font-medium text-foreground">{notif.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{notif.message}</p>
+                        <p className="text-xs text-muted-foreground/70 mt-1">
+                          {new Date(notif.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                        </p>
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
             </>
@@ -171,7 +265,9 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
         <div className="relative">
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center gap-2 p-1 rounded-lg hover:bg-accent transition-colors"
+            aria-expanded={userMenuOpen}
+            aria-haspopup="true"
+            className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-accent transition-colors"
           >
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold">
               {currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
@@ -181,7 +277,7 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
           {userMenuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
-              <div className="absolute right-0 top-10 z-20 w-52 bg-card border border-border rounded-xl shadow-lg py-1">
+              <div role="menu" className="absolute right-0 top-10 z-20 w-52 bg-card border border-border rounded-xl shadow-lg py-1">
                 <div className="px-4 py-2.5 border-b border-border/50">
                   <p className="text-sm font-semibold text-foreground">{currentUser.name}</p>
                   <p className="text-xs text-muted-foreground">{currentUser.email}</p>
@@ -189,6 +285,7 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
                 <Link
                   to="/dashboard/settings"
                   onClick={() => setUserMenuOpen(false)}
+                  role="menuitem"
                   className="flex items-center gap-3 px-4 py-2 text-sm text-foreground/80 hover:bg-accent"
                 >
                   <User className="w-4 h-4 text-muted-foreground/70" /> Profile
@@ -196,12 +293,14 @@ export function Header({ onMenuClick, onCommandPalette, syncIndicator }: HeaderP
                 <Link
                   to="/dashboard/settings"
                   onClick={() => setUserMenuOpen(false)}
+                  role="menuitem"
                   className="flex items-center gap-3 px-4 py-2 text-sm text-foreground/80 hover:bg-accent"
                 >
                   <Settings className="w-4 h-4 text-muted-foreground/70" /> Settings
                 </Link>
                 <div className="border-t border-border/50 mt-1" />
                 <button
+                  role="menuitem"
                   onClick={() => {
                     setUserMenuOpen(false);
                     toast.success('Signed out successfully');
